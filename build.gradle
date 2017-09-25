@@ -29,6 +29,8 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
 	compile('org.springframework.boot:spring-boot-starter-data-jpa')
 	compile('org.springframework.boot:spring-boot-starter-data-cassandra')
+	compile('joda-time:joda-time:2.9.9')
+	compile files('../libs/loans/build/libs/loans-1.0-SNAPSHOT.jar')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile("info.cukes:cucumber-core:${cucumberVersion}")

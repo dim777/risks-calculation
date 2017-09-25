@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.cassandra.config.CassandraClusterFactoryBean;
 import org.springframework.data.cassandra.config.java.AbstractCassandraConfiguration;
@@ -19,8 +18,8 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
 @Configuration
 //@PropertySource(value = { "classpath:/db/embedded-cassandra.yaml" })
 @EnableCassandraRepositories(basePackages = "ru.techlab.risks.calculation.repository")
-public class CassandraConfig extends AbstractCassandraConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraConfig.class);
+public class AppConfig extends AbstractCassandraConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
 
     @Autowired
     private Environment environment;

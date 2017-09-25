@@ -15,7 +15,7 @@ import org.springframework.data.cassandra.core.CassandraAdminOperations;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import ru.techlab.risks.calculation.config.CassandraConfig;
+import ru.techlab.risks.calculation.config.AppConfig;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ import java.io.IOException;
  * Created by dim777999 on 20.09.2017.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = CassandraConfig.class)
+@ContextConfiguration(classes = AppConfig.class)
 @ActiveProfiles("test")
 public class CassandraRepositoryTests {
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraRepositoryTests.class);
