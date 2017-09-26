@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
  * Created by rb052775 on 28.08.2017.
  */
 @RunWith(Cucumber.class)
-@CucumberOptions(features = "src/test/resources/bdd")
-public class CucumberRunner {
+@CucumberOptions(features = "src/test/resources/loans")
+public class LoansTestsRunner {
 
 }

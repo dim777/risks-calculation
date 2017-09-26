@@ -16,8 +16,8 @@ import java.util.List;
  * Created by rb052775 on 22.08.2017.
  */
 @Service
-public class SimpleLoanService implements LoansService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleLoanService.class);
+public class LoanServiceImpl implements LoansService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoanServiceImpl.class);
 
     @Autowired
     private LoansRepository loansRepository;

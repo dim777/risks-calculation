@@ -28,14 +28,14 @@ public class SimpleLoan implements Loan, Serializable{
     @PrimaryKeyColumn(name = "id", type = PrimaryKeyType.PARTITIONED)
     private long id;
     /**
-     * Отделение ссудного счета DDABD
+     * Отделение ссудного счета
      */
     //@PrimaryKeyColumn(name = "ddabd", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
     @Column("ddabd")
     private String branch;
 
     /**
-     * Баз. ном. ссудн. счета DDAND
+     * Баз. ном. ссудн. счета
      */
     //@PrimaryKeyColumn(name = "ddand", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("ddand")

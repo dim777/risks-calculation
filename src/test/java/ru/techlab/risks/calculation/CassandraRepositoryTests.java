@@ -34,8 +34,7 @@ public class CassandraRepositoryTests {
     @Value("${cql.keyspaceActivateQuery}")
     private static String KEYSPACE_ACTIVATE_QUERY;
 
-    @Value("${cql.dataTableName}")
-    private static String DATA_TABLE_NAME;
+    private final static String _DATA_TABLE_NAME = "";
 
     @Autowired
     private CassandraAdminOperations adminTemplate;
