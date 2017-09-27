@@ -3,8 +3,10 @@ package ru.techlab.risks.calculation.repository;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
 import org.springframework.stereotype.Repository;
-import ru.techlab.risks.calculation.model.SimpleLoan;
+import ru.techlab.risks.calculation.model.BaseLoan;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -12,16 +14,21 @@ import java.util.stream.Stream;
  */
 
 @Repository
-public interface LoansRepository extends CassandraRepository<SimpleLoan> {
-    @Query("SELECT * from cdc.sddubydddt1 WHERE ddact = 'N' and dddt1 >= ?0 and dddt1 <= ?1")
-    Stream<SimpleLoan> findSimpleLoansByStartDateBetween(double from, double till);
+public interface LoansRepository extends CassandraRepository<BaseLoan> {
+//    List<BaseLoan> findAll();
 
-    @Query("SELECT * from cdc.sddubydddt1 WHERE ddact = 'Y' and dddt1 >= ?0 and dddt1 <= ?1")
-    Stream<SimpleLoan> findActiveSimpleLoansByStartDateBetween(double from, double till);
+    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'N' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
+    Stream<BaseLoan> findSimpleLoansByStartDateBetween(double from, double till);
 
-    @Query("SELECT * from cdc.sddubydddt1 WHERE ddact = 'Y'")
-    Stream<SimpleLoan> findAllActiveSimpleLoans();
+    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
+    Stream<BaseLoan> findActiveSimpleLoansByStartDateBetween(double from, double till);
 
-    @Query("SELECT * from cdc.sddubydddt1 WHERE ddact = 'Y' AND ddasv2 = '000'")
-    Stream<SimpleLoan> findAllActiveAndNonPortfolioSimpleLoans();
+    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y'")
+    Stream<BaseLoan> findAllActiveSimpleLoans();
+
+    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDASV2 = '000'")
+    Stream<BaseLoan> findAllActiveAndNonPortfolioSimpleLoans();
+
+    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDASV2 = '000' AND DDABD = ?0 AND DDAND = ?1 AND DDASD = ?2")
+    Optional<BaseLoan> findActiveAndNonPortfolioSimpleLoansByLoanId(String branch, String loanAccountNumber, String loanAccountSuffix);
 }

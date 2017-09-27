@@ -1,16 +1,21 @@
 package ru.techlab.risks.calculation.services.loans;
 
+import jnr.x86asm.OP;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.techlab.risks.calculation.model.SimpleLoan;
+import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.repository.LoansRepository;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
+import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
+import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Created by rb052775 on 22.08.2017.
@@ -22,19 +27,23 @@ public class LoanServiceImpl implements LoansService {
     @Autowired
     private LoansRepository loansRepository;
 
-    /** TODO: fix asap **/
     @Override
-    public List<SimpleLoan> getLoansByDtRangeAndActive(LocalDateTime dtFrom, LocalDateTime dtTill, boolean isActive) throws ConvertionEx {
-        double dtFromAs400 = DateTimeUtils.convert2As400Format(dtFrom);
-        double dtTillAs400 = DateTimeUtils.convert2As400Format(dtTill);
-        if(isActive == true){
-            //return loansRepository.findActiveSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
-        }
-        //return loansRepository.findSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
-        return null;
+    public BaseLoan getActiveAndNonPortfolioLoan(String branch, String accountNumber, String accountSuffix) throws LoanNotFoundException {
+        Optional<BaseLoan> loan = loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(branch, accountNumber, accountSuffix);
+        return loan.orElseThrow(() -> new LoanNotFoundException("No loan found"));
     }
 
     @Override
+    public Stream<BaseLoan> getLoansByDtRangeAndActive(LocalDateTime dtFrom, LocalDateTime dtTill, boolean isActive) throws ConvertionEx {
+        double dtFromAs400 = DateTimeUtils.convert2As400Format(dtFrom);
+        double dtTillAs400 = DateTimeUtils.convert2As400Format(dtTill);
+        if(isActive == true){
+            return loansRepository.findActiveSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
+        }
+        return loansRepository.findSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
+    }
+
+    /*@Override
     public static FuturesQuote process(List<? extends FuturesTick> ticks, TimeFrame timeFrame) throws ConvertionEx {
         if(ticks.isEmpty())
             throw new ConvertionEx("Couldn't convert ticks to quote: ticks list is empty.");
@@ -46,7 +55,6 @@ public class LoanServiceImpl implements LoansService {
             bq.setOpen((firstTick.getAsk() + firstTick.getBid())/2);
             bq.setFutureSecurity(firstTick.getSecurity());
 
-            //TODO: create method without hardening
             switch (timeFrame){
                 case S1: created = firstTick.getCreated().withMillisOfSecond(0);
                     ///
@@ -78,5 +86,5 @@ public class LoanServiceImpl implements LoansService {
         };
 
         return lastQuoteFunc.apply(q, ticks.get(ticks.size() - 1));
-    }
+    }*/
 }

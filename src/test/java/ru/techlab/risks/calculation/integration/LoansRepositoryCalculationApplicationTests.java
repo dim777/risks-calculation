@@ -9,11 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-import ru.techlab.risks.calculation.model.SimpleLoan;
+import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.repository.LoansRepository;
 import ru.techlab.risks.calculation.services.loans.LoansService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @RunWith(SpringRunner.class)
 //@SpringBootTest(classes = {AppConfig.class})
@@ -33,20 +34,20 @@ public class LoansRepositoryCalculationApplicationTests {
 	 */
 	@Test
 	public void whenSelectLoansBetweenSpecificDatesThenCountThem() {
-		List<SimpleLoan> specifiedLoans = loansRepository.findSimpleLoansByStartDateBetween(1170701,1170804);
-		Assert.assertEquals(35, specifiedLoans.size(), 0.0000001);
+		Stream<BaseLoan> specifiedLoans = loansRepository.findSimpleLoansByStartDateBetween(1170701,1170804);
+		Assert.assertEquals(35, specifiedLoans.count(), 0.0000001);
 	}
 
 	@Test
 	public void whenSelectLoansIsActiveAndBetweenSpecificDatesThenCountThem() {
-		List<SimpleLoan> specifiedActiveLoans = loansRepository.findActiveSimpleLoansByStartDateBetween(1160501,1160805);
-		Assert.assertEquals(97, specifiedActiveLoans.size(), 0.0000001);
+		Stream<BaseLoan> specifiedActiveLoans = loansRepository.findActiveSimpleLoansByStartDateBetween(1160501,1160805);
+		Assert.assertEquals(97, specifiedActiveLoans.count(), 0.0000001);
 	}
 
 	@Test
 	public void whenSelectAllActiveLoansFromCassandraThenCountThem() {
-		List<SimpleLoan> activeLoans = loansRepository.findAllActiveSimpleLoans();
-		Assert.assertEquals(4367, activeLoans.size(), 0.0000001);
+		Stream<BaseLoan> activeLoans = loansRepository.findAllActiveSimpleLoans();
+		Assert.assertEquals(4367, activeLoans.count(), 0.0000001);
 	}
 
 	@Test(expected = RuntimeException.class)

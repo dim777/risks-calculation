@@ -27,10 +27,17 @@ public class BasicTests {
         LocalDateTime localDateTimeExpected = LocalDateTime.parse("1984-09-21");
         Assert.assertEquals(localDateTimeExpected, localDateTimeFromAs400);
     }
+    @Test
+    public void whenConvertAs400DateTimeToJodaTimeForInfiniteDate() throws ConvertionEx {
+        LocalDateTime localDateTimeFromAs400 = DateTimeUtils.convertFromAs400Format(9999999);
+        LocalDateTime localDateTimeExpected = LocalDateTime.parse("2999-12-30");
+        Assert.assertEquals(localDateTimeExpected, localDateTimeFromAs400);
+    }
     @Test(expected = ConvertionEx.class)
     public void whenConvertAs400DateTimeToJodaTimeInWrongFormat() throws ConvertionEx {
         LocalDateTime localDateTimeFromAs400 = DateTimeUtils.convertFromAs400Format(11840921);
         LocalDateTime localDateTimeExpected = LocalDateTime.parse("1984-09-21");
         Assert.assertEquals(localDateTimeExpected, localDateTimeFromAs400);
     }
+
 }

@@ -1,6 +1,10 @@
-cql:
-  keyspaceCreationQuery: "CREATE KEYSPACE IF NOT EXISTS testKeySpace WITH replication = { 'class': 'SimpleStrategy', 'replication_factor': '3' };"
-  keyspaceActivateQuery: "USE testKeySpace;"
+spring:
+  data:
+    cassandra:
+      cluster-name: "local"
+      contact-points: 127.0.0.1
+      port: 9152
+      keyspace-name: testKeySpace
 
 logging:
   level:

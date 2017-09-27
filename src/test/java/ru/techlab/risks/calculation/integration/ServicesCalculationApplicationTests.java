@@ -12,11 +12,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Timed;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.services.loans.LoansService;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
 import ru.xegex.risks.libs.model.loan.Loan;
-import ru.xegex.risks.services.loans.LoansService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Created by rb052775 on 22.08.2017.
@@ -41,8 +43,8 @@ public class ServicesCalculationApplicationTests {
     public void whenGetLoansServiceIsActiveAndBetweenSpecificDatesThenCountThem() throws ConvertionEx {
         LocalDateTime dtFrom = LocalDateTime.parse("2016-02-01");
         LocalDateTime dtTill = LocalDateTime.parse("2016-07-21");
-        List<Loan> specifiedActiveLoans = loansService.getLoansByDtRangeAndActive(dtFrom, dtTill, true);
-        Assert.assertEquals(172, specifiedActiveLoans.size(), 0.0000001);
+        Stream<BaseLoan> specifiedActiveLoans = loansService.getLoansByDtRangeAndActive(dtFrom, dtTill, true);
+        Assert.assertEquals(172, specifiedActiveLoans.count(), 0.0000001);
     }
     @Test
     @Timed(millis = 60000)
@@ -52,7 +54,7 @@ public class ServicesCalculationApplicationTests {
     public void whenGetLoansServiceBetweenSpecificDatesThenCountThem() throws ConvertionEx {
         LocalDateTime dtFrom = LocalDateTime.parse("2016-02-01");
         LocalDateTime dtTill = LocalDateTime.parse("2016-07-21");
-        List<Loan> specifiedLoans = loansService.getLoansByDtRangeAndActive(dtFrom, dtTill, false);
-        Assert.assertEquals(628466, specifiedLoans.size(), 0.0000001);
+        Stream<BaseLoan> specifiedLoans = loansService.getLoansByDtRangeAndActive(dtFrom, dtTill, false);
+        Assert.assertEquals(628466, specifiedLoans.count(), 0.0000001);
     }
 }

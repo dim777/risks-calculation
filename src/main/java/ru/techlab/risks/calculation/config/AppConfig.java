@@ -3,6 +3,7 @@ package ru.techlab.risks.calculation.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -16,28 +17,25 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
  * Created by dim777999 on 21.09.2017.
  */
 @Configuration
-//@PropertySource(value = { "classpath:/db/embedded-cassandra.yaml" })
 @EnableCassandraRepositories(basePackages = "ru.techlab.risks.calculation.repository")
 public class AppConfig extends AbstractCassandraConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
 
-    @Autowired
-    private Environment environment;
-
-    @Override
-    protected String getKeyspaceName() {
-        return environment.getProperty("cassandra.keyspace");
-    }
+    @Value("${spring.data.cassandra.keyspace-name}")
+    private String keyspace;
+    @Value("${spring.data.cassandra.contact-points}")
+    private String contactPoints;
+    @Value("${spring.data.cassandra.port}")
+    private Integer port;
 
     @Override
     @Bean
     public CassandraClusterFactoryBean cluster() {
         final CassandraClusterFactoryBean cluster = new CassandraClusterFactoryBean();
-        cluster.setContactPoints(environment.getProperty("cassandra.contactpoints"));
-        cluster.setPort(Integer.parseInt(environment.getProperty("cassandra.port")));
-
-        LOGGER.info("Cluster created with contact points [" + environment.getProperty("cassandra.contactpoints") + "] " + "& port [" + Integer.parseInt(environment.getProperty("cassandra.port")) + "].");
-
+        cluster.setContactPoints(contactPoints);
+        //cluster.setPort(Integer.parseInt(port));
+        cluster.setPort(port);
+        LOGGER.info("Cluster started: " + contactPoints + ":" + port + ", keyspace: " + keyspace);
         return cluster;
     }
 
@@ -45,5 +43,10 @@ public class AppConfig extends AbstractCassandraConfiguration {
     @Bean
     public CassandraMappingContext cassandraMapping() throws ClassNotFoundException {
         return new BasicCassandraMappingContext();
+    }
+
+    @Override
+    protected String getKeyspaceName() {
+        return keyspace;
     }
 }
