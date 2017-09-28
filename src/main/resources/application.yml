@@ -2,6 +2,8 @@ spring:
   data:
     cassandra:
       cluster-name: "TechLabCassandraCluster"
-      contact-points: 10.45.250.114,10.45.250.113,10.45.250.112
+      contact-points: 10.45.250.112,10.45.250.113,10.45.250.114,
       port: 9042
       keyspace-name: cdc
+      username: ${login:}
+      password: ${pass:}

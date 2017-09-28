@@ -16,26 +16,26 @@ import java.io.Serializable;
 /**
  * Created by rb052775 on 26.09.2017.
  */
-@Table("SRRU")
+@Table("SRRUSDDU")
 @Data
 public class BaseDelay implements Delay, Serializable {
     private static final long serialVersionUID = 3375159358757648792L;
     /**
      * Отделение ссудного счета DDABD
      */
-    @PrimaryKeyColumn(name = "RRABD", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "SABD", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String branch;
 
     /**
      * Баз. ном. ссудн. счета
      */
-    @PrimaryKeyColumn(name = "RRAND", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "SAND", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
     private String loanAccountNumber;
 
     /**
      * Суффикс ссудного счета
      */
-    @PrimaryKeyColumn(name = "RRASD", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "SASD", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private String loanAccountSuffix;
 
 
@@ -55,9 +55,8 @@ public class BaseDelay implements Delay, Serializable {
     @Column("RRDTS")
     private Double startDate;
 
-    @Column("RPDTS")
+    @Column("RRDTS")
     private Double endDate;
-
 
     @Override
     public LocalDateTime getStartDelayDate() {

@@ -15,35 +15,25 @@ public class RisksCalculationApplication {
 	public static void main(String[] args) throws IOException {
 		if (args.length == 0) {
 			log.error("Usage:");
-			log.error("java -jar RisksCalculationApplication.jar -l <cassandra_login> -p <cassandra_password> -k <cassandra_keyspace>");
-			log.error("-l <cassandra_login> - required, Cassandra login");
-			log.error("-p <cassandra_password> - required, Cassandra pass");
-			log.error("-k <cassandra_keyspace> - required, Cassandra keyspace");
+			log.error("java -jar RisksCalculationApplication.jar --login=<cassandra_login> --pass=<cassandra_password>");
+			log.error("--login=<cassandra_login> - required, Cassandra login");
+			log.error("--pass=<cassandra_password> - required, Cassandra pass");
 			return;
 		}
 
 		String login = IntStream.range(0, args.length)
-				.filter(i -> args[i].equals("-l"))
-				.mapToObj(i -> args[i + 1])
+				.filter(i -> args[i].startsWith("--login="))
+				.mapToObj(i -> args[i].split("--login=")[0])
 				.findFirst()
 				.orElseThrow(() -> new IOException("Cassandra login must be provided"));
 
 		String password = IntStream.range(0, args.length)
-				.filter(i -> args[i].equals("-p"))
-				.mapToObj(i -> args[i + 1])
+				.filter(i -> args[i].startsWith("--pass="))
+				.mapToObj(i -> args[i].split("--pass=")[0])
 				.findFirst()
 				.orElseThrow(() -> new IOException("Cassandra password must be provided"));
 
-		String keyspace = IntStream.range(0, args.length)
-				.filter(i -> args[i].equals("-k"))
-				.mapToObj(i -> args[i + 1])
-				.findFirst()
-				.orElseThrow(() -> new IOException("Cassandra keyspace must be provided"));
 
-		SpringApplication.run(RisksCalculationApplication.class, new String[]{
-				"spring.data.cassandra.username=" + login,
-				"spring.data.cassandra.password=" + password,
-				"spring.data.cassandra.keyspace-name" + keyspace
-		});
+		SpringApplication.run(RisksCalculationApplication.class, args);
 	}
 }

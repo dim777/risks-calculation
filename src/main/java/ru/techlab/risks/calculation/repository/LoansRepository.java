@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 /**
  * Created by rb052775 on 21.08.2017.
  */
-
 @Repository
 public interface LoansRepository extends CassandraRepository<BaseLoan> {
 //    List<BaseLoan> findAll();
