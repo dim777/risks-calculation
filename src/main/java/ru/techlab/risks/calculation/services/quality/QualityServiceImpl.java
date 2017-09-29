@@ -7,6 +7,7 @@ import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
+import ru.xegex.risks.libs.model.delay.DelayType;
 import ru.xegex.risks.libs.model.loan.LoanQuality;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
@@ -21,11 +22,18 @@ public class QualityServiceImpl implements QualityService{
     private DelayService delayService;
 
     @Override
-    public LoanQuality calculateLoanQuality(BaseLoan loan) throws DelayNotFoundException {
+    public LoanQuality calculateLoanQuality(BaseLoan loan){
         LocalDateTime now = LocalDateTime.now();
+        Stream<BaseDelay> delayStream;
 
-        Stream<BaseDelay> delayStream = delayService
-                .getDelaysByLoan(loan);
+        try {
+            delayStream = delayService.getDelaysByLoan(loan);
+        }
+        catch (DelayNotFoundException ex){
+            return LoanQuality.GOOD;
+        }
+
+        //long delayCountI = delayStream.filter(baseDelay -> baseDelay.getDelayType().equals(DelayType.I)).count();
 
         long countBad = delayStream
                 .filter(baseDelay -> {

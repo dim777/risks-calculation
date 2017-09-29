@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.repository.LoansRepository;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
@@ -28,8 +29,8 @@ public class LoanServiceImpl implements LoansService {
     private LoansRepository loansRepository;
 
     @Override
-    public BaseLoan getActiveAndNonPortfolioLoan(String branch, String accountNumber, String accountSuffix) throws LoanNotFoundException {
-        Optional<BaseLoan> loan = loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(branch, accountNumber, accountSuffix);
+    public BaseLoan getActiveAndNonPortfolioLoan(AccountId accountId) throws LoanNotFoundException {
+        Optional<BaseLoan> loan = loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(accountId.getBranch(), accountId.getLoanAccountNumber(), accountId.getLoanAccountSuffix());
         return loan.orElseThrow(() -> new LoanNotFoundException("No loan found"));
     }
 

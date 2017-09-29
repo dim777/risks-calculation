@@ -8,5 +8,5 @@ import ru.xegex.risks.libs.model.loan.LoanQuality;
  * Created by rb052775 on 27.09.2017.
  */
 public interface QualityService {
-    LoanQuality calculateLoanQuality(BaseLoan loan) throws DelayNotFoundException;
+    LoanQuality calculateLoanQuality(BaseLoan loan);
 }
