@@ -7,18 +7,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cassandra.core.keyspace.DropTableSpecification;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.techlab.risks.calculation.model.AccountId;
+import ru.techlab.risks.calculation.model.BaseCustomer;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.services.customer.CustomerService;
 import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.techlab.risks.calculation.services.loans.LoansService;
 import ru.techlab.risks.calculation.services.quality.QualityService;
+import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
-import ru.xegex.risks.libs.model.loan.LoanQuality;
+import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
+import ru.xegex.risks.libs.model.loan.LoanServCoeff;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -33,6 +36,8 @@ public class RisksCalculationApplicationGoodTests {
 	protected LoansService loansService;
 	@Autowired
 	protected DelayService delayService;
+	@Autowired
+	protected CustomerService customerService;
 
 	private static boolean IS_RUN_ONCE = true;
 	private static int RUN_ONCE_COUNTER_BEFORE;
@@ -45,8 +50,10 @@ public class RisksCalculationApplicationGoodTests {
 	 | loanAccountNumber | 045737 |
 	 | loanAccountSuffix | 200 |
 	 */
-	private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("5139", "045737", "200");
-	private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("5139", "045737", "200");
+	//private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("9499", "V79963", "200");
+	//private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9499", "V79963", "200");
+	private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("9472", "889684", "200");
+	private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9472", "889684", "200");
 
 	private BaseLoan latestLoan = null;
 
@@ -56,8 +63,14 @@ public class RisksCalculationApplicationGoodTests {
 		if(IS_RUN_ONCE == true){
 			if(RUN_ONCE_COUNTER_BEFORE == 0){
 				RUN_ONCE_COUNTER_BEFORE++;
-				cassandraOperations.execute("DROP TABLE IF EXISTS srrusddu");
-				cassandraOperations.execute("DROP TABLE IF EXISTS sddu");
+				cassandraOperations.execute("DROP TABLE IF EXISTS srrusddu;");
+				cassandraOperations.execute("DROP TABLE IF EXISTS sddu;");
+				cassandraOperations.execute("DROP TABLE IF EXISTS gfpf;");
+
+				cassandraOperations.execute("CREATE TABLE gfpf (GFCUS VARCHAR,GFCLC VARCHAR,GFCUN VARCHAR,GFCPNC VARCHAR,GFDAS VARCHAR,GFC1R VARCHAR,GFC2R VARCHAR,GFC3R VARCHAR,GFC4R VARCHAR,GFC5R VARCHAR,GFP1R VARCHAR,GFP2R VARCHAR,GFP3R VARCHAR,GFP4R VARCHAR,GFP5R VARCHAR,GFCTP VARCHAR,GFCUB VARCHAR,GFCUC VARCHAR,GFCUD VARCHAR,GFCUZ VARCHAR,GFSAC VARCHAR,GFACO VARCHAR,GFCRF VARCHAR,GFLNM VARCHAR,GFCA2 VARCHAR,GFCNAP VARCHAR,GFCNAR VARCHAR,GFCNAL VARCHAR,GFCOD DECIMAL,GFDCC DECIMAL,GFDLM DECIMAL,GFITRT DECIMAL,GFBRNM VARCHAR,GFCRB1 VARCHAR,GFCRB2 VARCHAR,GFADJ DECIMAL,GFERCP VARCHAR,GFERCC VARCHAR,GFDRC VARCHAR,GFGRPS VARCHAR,GFCUNA VARCHAR,GFDASA VARCHAR,GFCUNM VARCHAR,GFCNAI VARCHAR,GFGRP VARCHAR,GFMTB VARCHAR,GFETX VARCHAR,GFYFON VARCHAR,GFDFRQ DECIMAL,GFFON VARCHAR,GFFOL VARCHAR,GFDEL VARCHAR,\n" +
+						"PRIMARY KEY (GFCUS, GFC3R));");
+				cassandraOperations.execute("INSERT INTO gfpf (GFCUS,GFCLC,GFCUN,GFCPNC,GFDAS,GFC1R,GFC2R,GFC3R,GFC4R,GFC5R,GFP1R,GFP2R,GFP3R,GFP4R,GFP5R,GFCTP,GFCUB,GFCUC,GFCUD,GFCUZ,GFSAC,GFACO,GFCRF,GFLNM,GFCA2,GFCNAP,GFCNAR,GFCNAL,GFCOD,GFDCC,GFDLM,GFITRT,GFBRNM,GFCRB1,GFCRB2,GFADJ,GFERCP,GFERCC,GFDRC,GFGRPS,GFCUNA,GFDASA,GFCUNM,GFCNAI,GFGRP,GFMTB,GFETX,GFYFON,GFDFRQ,GFFON,GFFOL,GFDEL)\n" +
+						"VALUES ('889684','   ','ООО РОМАШКА               ','889684','РОМАШКА','  ','  ','3','  ','  ','   ','   ','   ','   ','   ','CB','N','N','N','N','PP','PR1','4717007769','  ','AA','  ','RU','RU',1140422,0,1170209,0.00E+00,'9472','Z1','  ',0.00E+00,'      ','      ','N',' ','                                   ','               ','                                   ','RU','      ','9472','N','N',0,'               ','          ',' ')");
 
 				cassandraOperations.execute("CREATE TABLE sddu (DDCODE VARCHAR, DDABD VARCHAR, DDAND VARCHAR, DDASD VARCHAR, DDABC VARCHAR, DDASC VARCHAR, DDASV1 VARCHAR, DDASV2 VARCHAR, DDNCD VARCHAR, DDAMN DECIMAL, DDDT1 DECIMAL, DDDT2 DECIMAL, DDAP VARCHAR,\n" +
 						"DDSP VARCHAR, DDOM VARCHAR, DDOI VARCHAR, DDCOM VARCHAR, DDCOMD1 DECIMAL, DDCOMD2 DECIMAL, DDACT VARCHAR, DDLAST VARCHAR, DDUID VARCHAR, DDWID VARCHAR, DDDT DECIMAL, DDTM DECIMAL, DDAFG VARCHAR,\n" +
@@ -127,8 +140,8 @@ public class RisksCalculationApplicationGoodTests {
 	 */
 	@Test
 	public void get_no_delays_for_specified_account(){
-		LoanQuality loanQuality = qualityService.calculateLoanQuality(latestLoan);
-		Assert.assertEquals(LoanQuality.GOOD, loanQuality);
+		LoanServCoeff loanQuality = qualityService.calculateLoanServCoeff(latestLoan);
+		Assert.assertEquals(LoanServCoeff.GOOD, loanQuality);
 	}
 
 	/**
@@ -137,17 +150,26 @@ public class RisksCalculationApplicationGoodTests {
 	@Test
 	public void get_one_delays_for_specified_account_and_() throws LoanNotFoundException, DelayNotFoundException {
 		latestLoan = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_ONE_DELAY);
-		LoanQuality loanQuality = qualityService.calculateLoanQuality(latestLoan);
-		Assert.assertEquals(LoanQuality.GOOD, loanQuality);
+		LoanServCoeff loanQuality = qualityService.calculateLoanServCoeff(latestLoan);
+		Assert.assertEquals(LoanServCoeff.GOOD, loanQuality);
 	}
+
+	@Test
+	public void calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx {
+		LoanServCoeff loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan);
+		BaseCustomer customer = customerService.getCustomer(latestLoan.getLoanAccountNumber());
+		qualityService.calculateLoanQualityCategory(customer.getFinState(), loanServCoeff);
+		Assert.assertEquals(LoanServCoeff.GOOD, loanServCoeff);
+	}
+
 
 	@After
 	public void shutDown(){
 		if(IS_RUN_ONCE == true){
 			if(RUN_ONCE_COUNTER_AFTER == 0){
 				RUN_ONCE_COUNTER_AFTER++;
-				DropTableSpecification dropper = DropTableSpecification.dropTable("srrusddu");
-				cassandraOperations.execute(dropper);
+				/*DropTableSpecification dropper = DropTableSpecification.dropTable("srrusddu");
+				cassandraOperations.execute(dropper);*/
 			}
 		}
 	}
