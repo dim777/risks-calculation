@@ -27,7 +27,8 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
 	compile('org.springframework.boot:spring-boot-starter-data-cassandra')
 	compile('joda-time:joda-time:2.9.9')
-	compile files('../libs/loans/build/libs/loans-1.0-SNAPSHOT.jar')
+	compile files('../risks-libs/build/libs/loans-1.0-SNAPSHOT.jar')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testCompile('org.mockito:mockito-core:2.10.0')
 }
