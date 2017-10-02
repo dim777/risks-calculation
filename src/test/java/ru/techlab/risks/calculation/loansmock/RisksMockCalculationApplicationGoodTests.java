@@ -13,7 +13,10 @@ import ru.techlab.risks.calculation.loansmock.config.MockConfig;
 import ru.techlab.risks.calculation.loansmock.config.TestAppConfig;
 import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseCustomer;
+import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.repository.DelaysRepository;
+import ru.techlab.risks.calculation.repository.LoansRepository;
 import ru.techlab.risks.calculation.services.customer.CustomerService;
 import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.techlab.risks.calculation.services.loans.LoansService;
@@ -22,8 +25,12 @@ import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
+import ru.xegex.risks.libs.model.delay.DelayType;
 import ru.xegex.risks.libs.model.loan.LoanServCoeff;
 import ru.xegex.risks.libs.model.quality.LoanQualityCategory;
+
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { TestAppConfig.class, MockConfig.class})
@@ -40,6 +47,11 @@ public class RisksMockCalculationApplicationGoodTests {
 	@Autowired
 	protected CustomerService customerService;
 
+	@Autowired
+	private LoansRepository loansRepository;
+	@Autowired
+	private DelaysRepository delaysRepository;
+
 	/**
 	 | branch | 5139 |
 	 | loanAccountNumber | 045737 |
@@ -50,8 +62,7 @@ public class RisksMockCalculationApplicationGoodTests {
 	private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("9472", "889684", "200");
 	private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9472", "889684", "200");
 
-	private BaseLoan latestLoan = null;
-
+	private static BaseLoan latestLoan = null;
 
 	/**
 	 * Обслуживание долга по ссуде может быть признано хорошим, если:
@@ -68,16 +79,17 @@ public class RisksMockCalculationApplicationGoodTests {
     */
     @Test
     public void a_account_number_with_no_delays() throws LoanNotFoundException {
-        BaseLoan mockBaseLoan = new BaseLoan();
-        mockBaseLoan.setBranch("9472");
-        mockBaseLoan.setLoanAccountNumber("889684");
-        mockBaseLoan.setLoanAccountSuffix("200");
-        mockBaseLoan.setBalance(-300000000);
-        mockBaseLoan.setStartDate(1140422);
-        mockBaseLoan.setActive("Y");
+		BaseLoan mockBaseLoan = new BaseLoan();
+		mockBaseLoan.setBranch("9472");
+		mockBaseLoan.setLoanAccountNumber("889684");
+		mockBaseLoan.setLoanAccountSuffix("200");
+		mockBaseLoan.setBalance(-300000000);
+		mockBaseLoan.setStartDate(1140422);
+		mockBaseLoan.setActive("Y");
 
-		Mockito.when(loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_NO_DELAY))
-				.thenReturn(mockBaseLoan);
+		Mockito.when(loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(ACCOUNT_ID_WITH_NO_DELAY.getBranch(), ACCOUNT_ID_WITH_NO_DELAY.getLoanAccountNumber(), ACCOUNT_ID_WITH_NO_DELAY.getLoanAccountSuffix()))
+				.thenReturn(Optional.ofNullable(mockBaseLoan));
+
 		latestLoan = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_NO_DELAY);
 		Assert.assertNotEquals(null, latestLoan);
 		/*
@@ -93,10 +105,30 @@ public class RisksMockCalculationApplicationGoodTests {
 	 */
 	@Test
 	public void b_get_no_delays_for_specified_account(){
-        Mockito.when(qualityService.calculateLoanServCoeff(latestLoan))
-                .thenReturn(LoanServCoeff.GOOD);
-		LoanServCoeff loanQuality = qualityService.calculateLoanServCoeff(latestLoan);
-		Assert.assertEquals(LoanServCoeff.GOOD, loanQuality);
+		BaseDelay baseDelay0 = new BaseDelay();
+		baseDelay0.setBranch(latestLoan.getBranch());
+		baseDelay0.setLoanAccountNumber(latestLoan.getLoanAccountNumber());
+		baseDelay0.setLoanAccountSuffix(latestLoan.getLoanAccountSuffix());
+		baseDelay0.setDelayType(DelayType.P);
+		baseDelay0.setLoanStartDate(1140422D);
+		baseDelay0.setStartDate(1140722D);
+		baseDelay0.setEndDate(1140723D);
+
+		BaseDelay baseDelay1 = new BaseDelay();
+		baseDelay1.setBranch(latestLoan.getBranch());
+		baseDelay1.setLoanAccountNumber(latestLoan.getLoanAccountNumber());
+		baseDelay1.setLoanAccountSuffix(latestLoan.getLoanAccountSuffix());
+		baseDelay1.setDelayType(DelayType.P);
+		baseDelay1.setLoanStartDate(1140422D);
+		baseDelay1.setStartDate(1141222D);
+		baseDelay1.setEndDate(1141223D);
+
+
+		Mockito.when(delaysRepository.findSimpleDelayByLoan(latestLoan.getBranch(), latestLoan.getLoanAccountNumber(), latestLoan.getLoanAccountSuffix()))
+				.thenReturn(Stream.of(baseDelay0, baseDelay1));
+
+		LoanServCoeff loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan);
+		Assert.assertEquals(LoanServCoeff.GOOD, loanServCoeff);
 	}
 
 	/**
@@ -113,7 +145,6 @@ public class RisksMockCalculationApplicationGoodTests {
 
 	@Test
 	public void d_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx {
-
 	    LoanServCoeff loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan);
 		BaseCustomer customer = customerService.getCustomer(latestLoan.getLoanAccountNumber());
         Mockito.when(qualityService.calculateLoanQualityCategory(customer.getFinState(), loanServCoeff))

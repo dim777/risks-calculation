@@ -37,6 +37,13 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
 
         //long delayCountI = delayStream.filter(baseDelay -> baseDelay.getDelayType().equals(DelayType.I)).count();
 
+        long countBadTemp = delayStream
+                .filter(baseDelay -> {
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.BAD.getLastDays()) return true;
+                    return false;
+                })
+                .count();
+
         long countBad = delayStream
                 .filter(baseDelay -> {
                     if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.BAD.getLastDays()) return true;
@@ -79,6 +86,12 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
         return null;
     }
 
+    /**
+     * Calculate LoanQualityCategory
+     * @param finState
+     * @param loanQuality
+     * @return
+     */
     @Override
     public LoanQualityCategory calculateLoanQualityCategory(FinState finState, LoanServCoeff loanQuality){
         int x = 0, y = 0;
