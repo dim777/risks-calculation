@@ -1,11 +1,14 @@
 package ru.techlab.risks.calculation.services.delay;
 
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.repository.DelaysRepository;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
+import ru.xegex.risks.libs.model.loan.LoanServCoeff;
+import ru.xegex.risks.libs.utils.DateTimeUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,11 +23,17 @@ public class DelayServiceImpl implements DelayService{
     private DelaysRepository delaysRepository;
 
     @Override
-    public Stream<BaseDelay> getDelaysByLoan(BaseLoan loan) throws DelayNotFoundException {
+    public List<BaseDelay> getDelaysByLoanForLastNDays(BaseLoan loan, LocalDateTime currentDate, int days) throws DelayNotFoundException {
         Stream<BaseDelay> stream = delaysRepository.findSimpleDelayByLoan(loan.getBranch(), loan.getLoanAccountNumber(), loan.getLoanAccountSuffix());
-        if(stream.count() == 0){
+        List<BaseDelay> delays = stream
+                .filter(baseDelay -> {
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), currentDate) > days) return false;
+                    return true;
+                })
+                .collect(Collectors.toList());
+        if(delays.size() == 0){
             throw new DelayNotFoundException("No delays found");
         }
-        return stream;
+        return delays;
     }
 }

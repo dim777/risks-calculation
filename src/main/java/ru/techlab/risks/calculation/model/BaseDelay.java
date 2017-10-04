@@ -23,19 +23,19 @@ public class BaseDelay implements Delay, Serializable {
     /**
      * Отделение ссудного счета DDABD
      */
-    @PrimaryKeyColumn(name = "SABD", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "RRABD", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String branch;
 
     /**
      * Баз. ном. ссудн. счета
      */
-    @PrimaryKeyColumn(name = "SAND", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "RRAND", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
     private String loanAccountNumber;
 
     /**
      * Суффикс ссудного счета
      */
-    @PrimaryKeyColumn(name = "SASD", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "RRASD", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private String loanAccountSuffix;
 
 
@@ -49,13 +49,12 @@ public class BaseDelay implements Delay, Serializable {
      * тип просрочки
      */
     @PrimaryKeyColumn(name = "RRIP", ordinal = 4, type = PrimaryKeyType.CLUSTERED)
-    @Column("RRIP")
     private DelayType delayType;
 
     @Column("RRDTS")
     private Double startDate;
 
-    @Column("RRDTS")
+    @Column("RRDTE")
     private Double endDate;
 
     @Override

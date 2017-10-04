@@ -16,18 +16,18 @@ import java.util.stream.Stream;
 public interface LoansRepository extends CassandraRepository<BaseLoan> {
 //    List<BaseLoan> findAll();
 
-    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'N' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
+    @Query("SELECT * FROM SDDU WHERE DDACT = 'N' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
     Stream<BaseLoan> findSimpleLoansByStartDateBetween(double from, double till);
 
-    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
+    @Query("SELECT * FROM SDDU WHERE DDACT = 'Y' AND DDDT1 >= ?0 AND DDDT1 <= ?1")
     Stream<BaseLoan> findActiveSimpleLoansByStartDateBetween(double from, double till);
 
-    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y'")
+    @Query("SELECT * FROM SDDU WHERE DDACT = 'Y'")
     Stream<BaseLoan> findAllActiveSimpleLoans();
 
-    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDASV2 = '000'")
+    @Query("SELECT * FROM SDDU WHERE DDACT = 'Y' AND DDASV2 = '000'")
     Stream<BaseLoan> findAllActiveAndNonPortfolioSimpleLoans();
 
-    @Query("SELECT * FROM SDDUBYDDDT1 WHERE DDACT = 'Y' AND DDASV2 = '000' AND DDABD = ?0 AND DDAND = ?1 AND DDASD = ?2")
+    @Query("SELECT * FROM SDDU WHERE DDACT = 'Y' AND DDASV2 = '000' AND DDABD = ?0 AND DDAND = ?1 AND DDASD = ?2")
     Optional<BaseLoan> findActiveAndNonPortfolioSimpleLoansByLoanId(String branch, String loanAccountNumber, String loanAccountSuffix);
 }

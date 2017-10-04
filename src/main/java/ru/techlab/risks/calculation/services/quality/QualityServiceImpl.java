@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.repository.DelaysRepository;
 import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.model.customer.FinState;
@@ -13,6 +14,8 @@ import ru.xegex.risks.libs.model.quality.LoanQualityCategory;
 import ru.xegex.risks.libs.model.quality.LoanQualityCategoryMatrix;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -24,29 +27,26 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
     private DelayService delayService;
 
     @Override
-    public LoanServCoeff calculateLoanServCoeff(BaseLoan loan){
-        LocalDateTime now = LocalDateTime.now();
-        Stream<BaseDelay> delayStream;
-
+    public LoanServCoeff calculateLoanServCoeff(BaseLoan loan, LocalDateTime endOfDay){
+        List<BaseDelay> delaysList = null;
         try {
-            delayStream = delayService.getDelaysByLoan(loan);
-        }
-        catch (DelayNotFoundException ex){
+            delaysList = delayService.getDelaysByLoanForLastNDays(loan, endOfDay, LoanServCoeff.BAD.getLastDays());
+        } catch (DelayNotFoundException e) {
             return LoanServCoeff.GOOD;
         }
 
-        //long delayCountI = delayStream.filter(baseDelay -> baseDelay.getDelayType().equals(DelayType.I)).count();
+        /**
 
         long countBadTemp = delayStream
                 .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.BAD.getLastDays()) return true;
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.BAD.getLastDays()) return true;
                     return false;
                 })
                 .count();
 
         long countBad = delayStream
                 .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.BAD.getLastDays()) return true;
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.BAD.getLastDays()) return true;
                     return false;
                 })
                 .filter(baseDelay -> {
@@ -59,7 +59,7 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
 
         long countMid = delayStream
                 .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.MID.getLastDays()) return true;
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.MID.getLastDays()) return true;
                     return false;
                 })
                 .filter(baseDelay -> {
@@ -72,7 +72,7 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
 
         long countGood = delayStream
                 .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), now) > LoanServCoeff.GOOD.getLastDays()) return true;
+                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.GOOD.getLastDays()) return true;
                     return false;
                 })
                 .filter(baseDelay -> {
@@ -82,7 +82,7 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
                 .count();
 
         if(countGood > 0) return LoanServCoeff.GOOD;
-
+**/
         return null;
     }
 
