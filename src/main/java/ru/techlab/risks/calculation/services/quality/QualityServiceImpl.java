@@ -26,6 +26,12 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
     @Autowired
     private DelayService delayService;
 
+    /**
+     * Calculate LoanServCoeff
+     * @param loan
+     * @param endOfDay
+     * @return
+     */
     @Override
     public LoanServCoeff calculateLoanServCoeff(BaseLoan loan, LocalDateTime endOfDay){
         List<BaseDelay> delaysList = null;
@@ -35,20 +41,8 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
             return LoanServCoeff.GOOD;
         }
 
-        /**
-
-        long countBadTemp = delayStream
-                .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.BAD.getLastDays()) return true;
-                    return false;
-                })
-                .count();
-
-        long countBad = delayStream
-                .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.BAD.getLastDays()) return true;
-                    return false;
-                })
+        long countBad = delaysList
+                .stream()
                 .filter(baseDelay -> {
                     if(baseDelay.getEndDate() - baseDelay.getStartDate() > LoanServCoeff.BAD.getMoreThanDays()) return true;
                     return false;
@@ -57,11 +51,8 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
 
         if(countBad > 0) return LoanServCoeff.BAD;
 
-        long countMid = delayStream
-                .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.MID.getLastDays()) return true;
-                    return false;
-                })
+        long countMid = delaysList
+                .stream()
                 .filter(baseDelay -> {
                     if(baseDelay.getEndDate() - baseDelay.getStartDate() > LoanServCoeff.MID.getMoreThanDays()) return true;
                     return false;
@@ -70,20 +61,17 @@ public class QualityServiceImpl extends LoanQualityCategoryMatrix implements Qua
 
         if(countMid > 0) return LoanServCoeff.MID;
 
-        long countGood = delayStream
-                .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), localDateTime) > LoanServCoeff.GOOD.getLastDays()) return true;
-                    return false;
-                })
+        long countGood = delaysList
+                .stream()
                 .filter(baseDelay -> {
                     if(baseDelay.getEndDate() - baseDelay.getStartDate() > LoanServCoeff.GOOD.getMoreThanDays()) return true;
                     return false;
                 })
                 .count();
 
-        if(countGood > 0) return LoanServCoeff.GOOD;
-**/
-        return null;
+        if(countBad > 0) return LoanServCoeff.GOOD;
+
+        return LoanServCoeff.GOOD;
     }
 
     /**

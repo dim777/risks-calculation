@@ -3,6 +3,7 @@ package ru.techlab.risks.calculation.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
  * Created by dim777999 on 21.09.2017.
  */
 @Configuration
+@EnableCaching
 @ComponentScan(basePackages = { "ru.*" })
 @EnableCassandraRepositories(basePackages = "ru.techlab.risks.calculation.repository")
 public class AppConfig extends AbstractCassandraConfiguration {

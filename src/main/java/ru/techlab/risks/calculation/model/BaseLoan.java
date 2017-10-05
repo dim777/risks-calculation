@@ -31,21 +31,18 @@ public class BaseLoan implements Loan, Serializable{
      * Отделение ссудного счета
      */
     @PrimaryKeyColumn(name = "ddabd", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
-    @Column("ddabd")
     private String branch;
 
     /**
      * Баз. ном. ссудн. счета
      */
     @PrimaryKeyColumn(name = "ddand", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
-    @Column("ddand")
     private String loanAccountNumber;
 
     /**
      * Суффикс ссудного счета
      */
     @PrimaryKeyColumn(name = "ddasd", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
-    @Column("ddasd")
     private String loanAccountSuffix;
 
     /**
@@ -64,8 +61,6 @@ public class BaseLoan implements Loan, Serializable{
     private String active;
 
     private Optional<Account> account;
-
-    private Optional<LoanQualityCategory> loanQualityCategory;
 
     @Override
     /**
