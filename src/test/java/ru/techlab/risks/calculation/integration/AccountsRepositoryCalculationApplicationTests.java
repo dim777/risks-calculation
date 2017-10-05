@@ -30,8 +30,10 @@ public class AccountsRepositoryCalculationApplicationTests {
 	 */
 	@Test
 	public void whenSelectAccountByBranchAndNumberAndSuffixThenGetOptional() throws AccountEx {
-		Optional<BaseAccount> account = accountRepository.findByBranchAndAccountNumberAndAccountSuffix("9370","V56287","405");
-		Assert.assertEquals(3000000, account.get().getId());
+		BaseAccount account = accountRepository
+				.findByBranchAndAccountNumberAndAccountSuffix("9370","V56287","405")
+				.get();
+		Assert.assertEquals(Integer.valueOf(3000000), account.getId());
 	}
 	@Test(expected = AccountEx.class)
 	public void whenSelectAccountByBranchAndNumberAndSuffixThenThrowExceptionWhenCannotFind() throws AccountEx {

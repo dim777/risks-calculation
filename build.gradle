@@ -25,6 +25,7 @@ repositories {
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
 	compile('org.springframework.boot:spring-boot-starter-data-cassandra')
+	compile("org.springframework:spring-web")
 	compile('joda-time:joda-time:2.9.9')
 	compile files('../risks-libs/build/libs/loans-1.0-SNAPSHOT.jar')
 	compileOnly('org.projectlombok:lombok')

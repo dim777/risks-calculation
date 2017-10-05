@@ -7,3 +7,11 @@ spring:
       keyspace-name: cdc
       username: ${login:}
       password: ${pass:}
+
+app:
+  configServer: "http://localhost:9100"
+  path:
+    config: "/config"
+    loanqualitycategories: "/risksparams/loanqualitycategories"
+    loanservcoeffs: "/risksparams/loanservcoeffs"
+    loanservcoeffsmatrix: "/risksparams/loanservcoeffsmatrix"

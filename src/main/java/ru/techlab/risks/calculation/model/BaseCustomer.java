@@ -7,7 +7,7 @@ import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.mapping.Table;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
 import ru.xegex.risks.libs.model.customer.Customer;
-import ru.xegex.risks.libs.model.customer.FinState;
+import ru.xegex.risks.libs.model.customer.FinStateType;
 
 import java.io.Serializable;
 
@@ -29,11 +29,11 @@ public class BaseCustomer implements Customer, Serializable {
     private String name;
 
     @Override
-    public FinState getFinState() throws QualityConvertionEx{
+    public FinStateType getFinStateType() throws QualityConvertionEx{
         Integer fs = Integer.parseInt(this.financialState);
-        if(fs.equals(0) || fs.equals(1)) return FinState.GOOD;
-        else if(fs.equals(2)) return FinState.MIDDLE;
-        else if(fs.equals(3) || fs.equals(4) || fs.equals(5)) return FinState.UNSATISFACTORY;
+        if(fs.equals(0) || fs.equals(1)) return FinStateType.GOOD;
+        else if(fs.equals(2)) return FinStateType.MIDDLE;
+        else if(fs.equals(3) || fs.equals(4) || fs.equals(5)) return FinStateType.UNSATISFACTORY;
         else throw new QualityConvertionEx("Couldn't convert Integer to FinState");
     }
 }

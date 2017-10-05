@@ -19,8 +19,9 @@ import ru.techlab.risks.calculation.services.quality.QualityService;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
+import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
-import ru.xegex.risks.libs.model.loan.LoanServCoeff;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.util.stream.Stream;
 
@@ -97,26 +98,26 @@ public class RisksCalculationApplicationGoodTests {
 	 * When: get no delays for specified account - the client receives loan quality GOOD
 	 */
 	@Test
-	public void c_get_no_delays_for_specified_account(){
-		LoanServCoeff loanQuality = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
-		Assert.assertEquals(LoanServCoeff.GOOD, loanQuality);
+	public void c_get_no_delays_for_specified_account() throws LoanServCoeffNotFoundEx {
+		LoanServCoeffType loanQuality = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
+		Assert.assertEquals(LoanServCoeffType.GOOD, loanQuality);
 	}
 
 	/**
 	 * When: only one delay for last 180 days - the client receives loan quality GOOD
 	 */
 	@Test
-	public void d_get_one_delays_for_specified_account_and_() throws LoanNotFoundException, DelayNotFoundException {
+	public void d_get_one_delays_for_specified_account_and_() throws LoanNotFoundException, DelayNotFoundException, LoanServCoeffNotFoundEx {
 		latestLoan = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_ONE_DELAY);
-		LoanServCoeff loanQuality = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
-		Assert.assertEquals(LoanServCoeff.GOOD, loanQuality);
+		LoanServCoeffType loanQualityType = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
+		Assert.assertEquals(LoanServCoeffType.GOOD, loanQualityType);
 	}
 
 	@Test
-	public void f_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx {
-		LoanServCoeff loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
+	public void f_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
+		LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
 		BaseCustomer customer = customerService.getCustomer(latestLoan.getLoanAccountNumber());
-		qualityService.calculateLoanQualityCategory(customer.getFinState(), loanServCoeff);
-		Assert.assertEquals(LoanServCoeff.GOOD, loanServCoeff);
+		qualityService.calculateLoanQualityCategory(customer.getFinStateType(), loanServCoeff);
+		Assert.assertEquals(LoanServCoeffType.GOOD, loanServCoeff);
 	}
 }

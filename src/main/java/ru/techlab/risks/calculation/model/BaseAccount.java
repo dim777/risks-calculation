@@ -21,7 +21,7 @@ public class BaseAccount implements Account, Serializable {
 
     //@PrimaryKeyColumn(name = "id", ordinal = 4, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
     @PrimaryKeyColumn(name = "id", type = PrimaryKeyType.PARTITIONED)
-    private long id;
+    private Long id;
     /**
      * Отделение счета SCAB
      */
