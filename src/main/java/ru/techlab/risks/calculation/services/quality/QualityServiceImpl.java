@@ -26,8 +26,6 @@ public class QualityServiceImpl implements QualityService {
     @Autowired
     private DelayService delayService;
     @Autowired
-    private RiskConfigParamsService riskConfigParamsService;
-    @Autowired
     private List<LoanQualityCategory> loanQualityCategoriesCache;
     @Autowired
     private List<LoanServCoeff> loanServCoeffsCache;

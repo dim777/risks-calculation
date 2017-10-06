@@ -20,7 +20,7 @@ public class ConfigServiceImpl implements ConfigService {
     private String path;
 
     @Override
-    public BaseConfig getBaseConfig(String configServer){
+    public BaseConfig getBaseConfig(){
         BaseConfig baseConfig = restTemplate
                 .getForObject(configServer + path, BaseConfig.class);
         return baseConfig;

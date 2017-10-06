@@ -1,17 +1,32 @@
 package ru.techlab.risks.calculation.loans;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.joda.time.LocalDateTime;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.techlab.risks.calculation.component.AppCache;
+import ru.techlab.risks.calculation.config.AppConfig;
+import ru.techlab.risks.calculation.component.AppCacheImpl;
+import ru.techlab.risks.calculation.loans.config.TestAppConfig;
 import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseCustomer;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.model.rest.BaseConfig;
+import ru.techlab.risks.calculation.model.rest.LoanQualityCategory;
+import ru.techlab.risks.calculation.model.rest.LoanQualityCategoryMatrix;
+import ru.techlab.risks.calculation.model.rest.LoanServCoeff;
+import ru.techlab.risks.calculation.services.config.ConfigService;
+import ru.techlab.risks.calculation.services.config.RiskConfigParamsService;
 import ru.techlab.risks.calculation.services.customer.CustomerService;
 import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.techlab.risks.calculation.services.loans.LoansService;
@@ -23,30 +38,47 @@ import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
-import java.util.stream.Stream;
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(classes = { TestAppConfig.class,  AppConfig.class, AppCacheImpl.class})
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RisksCalculationApplicationGoodTests {
 	@Autowired
-	private CassandraOperations cassandraOperations;
+	private QualityService qualityService;
+	@Autowired
+	private LoansService loansService;
+	@Autowired
+	private DelayService delayService;
+	@Autowired
+	private CustomerService customerService;
+	@Autowired
+	private ConfigService configService;
+	@Autowired
+	private RiskConfigParamsService riskConfigParamsService;
 
 	@Autowired
-	protected QualityService qualityService;
-	@Autowired
-	protected LoansService loansService;
-	@Autowired
-	protected DelayService delayService;
-	@Autowired
-	protected CustomerService customerService;
+	private AppCache appCache;
+
+	@Value("${app.configServer}")
+	private String configServer;
+	@Value("${app.path.config}")
+	private String configPath;
+	@Value("${app.path.loanqualitycategories}")
+	private String loanQualityCategories;
+	@Value("${app.path.loanservcoeffs}")
+	private String loanServCoeffs;
+	@Value("${app.path.loanservcoeffsmatrix}")
+	private String loanServCoeffsMatrix;
 
 	private static boolean IS_RUN_ONCE = true;
 	private static int RUN_ONCE_COUNTER_BEFORE;
 	private static int RUN_ONCE_COUNTER_AFTER;
 
-
+	private static ObjectMapper mapper = new ObjectMapper();
 
 	/**
 	 | branch | 5139 |
@@ -57,9 +89,14 @@ public class RisksCalculationApplicationGoodTests {
 	//private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9499", "V79963", "200");
 	private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("9472", "889684", "200");
 	private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9472", "889684", "200");
-	private static final LocalDateTime testEndOfDate = new LocalDateTime("2017-09-21");
+	private static final LocalDateTime TEST_END_OF_DATE = new LocalDateTime("2017-09-21");
 
-	private static BaseLoan latestLoan = null;
+	private static BaseLoan LATEST_LOAN = null;
+
+	/*private static BaseConfig CONFIG = null;
+	private static List<LoanServCoeff> LOAN_SERV_COEFFS = null;
+	private static List<LoanQualityCategory> LOAN_QUALITY_CATEGORY = null;
+	private static List<LoanQualityCategoryMatrix> LOAN_QUALITY_CATEGORY_MATRIX = null;*/
 
 	/**
 	 * Обслуживание долга по ссуде может быть признано хорошим, если:
@@ -74,21 +111,86 @@ public class RisksCalculationApplicationGoodTests {
 	 	| loanAccountNumber | 045737 |
     	| loanAccountSuffix | 200 |
     */
+
+	@Test
+	public void a_get_config_params() throws IOException {
+		String responseBody = "{\"id\":1,\"endOfDay\":\"2017-09-21\"}";
+
+		BaseConfig mockConfig = mapper.readValue(responseBody, BaseConfig.class);
+
+		Mockito
+				.when(configService.getBaseConfig())
+				.thenReturn(mockConfig);
+
+		BaseConfig baseConfig = configService.getBaseConfig();
+		appCache.setVar("BASE_CONFIG", baseConfig);
+		Assert.assertEquals(Integer.valueOf(1), appCache.getVar("BASE_CONFIG"));
+	}
+
+	@Test
+	public void b_get_risk_loan_serv_coeff() throws IOException {
+		String responseBody = "[{\"type\":\"GOOD\",\"id\":3,\"lastDays\":180,\"moreThanDays\":180},{\"type\":\"MID\",\"id\":2,\"lastDays\":180,\"moreThanDays\":30},{\"type\":\"BAD\",\"id\":1,\"lastDays\":180,\"moreThanDays\":5}]";
+
+		List<LoanServCoeff> mockLoanServCoeffs = mapper.readValue(responseBody,
+				TypeFactory.defaultInstance().constructCollectionType(List.class,
+						LoanServCoeff.class));
+
+		Mockito
+				.when(riskConfigParamsService.getAllLoanServCoeffs())
+				.thenReturn(mockLoanServCoeffs);
+
+		List<LoanServCoeff> loanServCoeffs = riskConfigParamsService.getAllLoanServCoeffs();
+		appCache.setVar("LOAN_SERV_COEFFS", loanServCoeffs);
+		Assert.assertEquals(3, ((List<LoanServCoeff>)appCache.getVar("LOAN_SERV_COEFFS")).size());
+	}
+
+	@Test
+	public void c_get_risk_loan_quality_categories() throws IOException {
+		String responseBody = "[{\"id\":5,\"type\":\"HOPELESS\",\"pmin\":100.0},{\"id\":1,\"type\":\"STANDARD\",\"pmin\":0.0},{\"id\":2,\"type\":\"NONSTANDARD\",\"pmin\":1.0},{\"id\":4,\"type\":\"PROBLEM\",\"pmin\":51.0},{\"id\":3,\"type\":\"DOUBTFUL\",\"pmin\":21.0}]";
+
+		List<LoanQualityCategory> mockLoanQualityCategory = mapper.readValue(responseBody,
+				TypeFactory.defaultInstance().constructCollectionType(List.class, LoanQualityCategory.class));
+
+		Mockito
+				.when(riskConfigParamsService.getAllLoanQualityCategories())
+				.thenReturn(mockLoanQualityCategory);
+
+		List<LoanQualityCategory> loanQualityCategories = riskConfigParamsService.getAllLoanQualityCategories();
+		appCache.setVar("LOAN_QUALITY_CATEGORIES", loanQualityCategories);
+		Assert.assertEquals(5, ((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES")).size());
+	}
+
+	@Test
+	public void d_get_risk_loan_quality_category_matrix() throws IOException {
+		String responseBody = "[{\"loanServCoeffId\":1,\"loanQualityByFsType1\":1,\"loanQualityByFsType2\":2,\"loanQualityByFsType3\":3},{\"loanServCoeffId\":2,\"loanQualityByFsType1\":2,\"loanQualityByFsType2\":3,\"loanQualityByFsType3\":4},{\"loanServCoeffId\":3,\"loanQualityByFsType1\":3,\"loanQualityByFsType2\":4,\"loanQualityByFsType3\":5}]";
+
+		List<LoanQualityCategoryMatrix> mockLoanQualityCategoryMatrix = mapper.readValue(responseBody,
+				TypeFactory.defaultInstance().constructCollectionType(List.class, LoanQualityCategoryMatrix.class));
+
+		Mockito
+				.when(riskConfigParamsService.getAllLoanQualityCategoryMatrix())
+				.thenReturn(mockLoanQualityCategoryMatrix);
+
+		List<LoanQualityCategoryMatrix> loanQualityCategoryMatrixCache = riskConfigParamsService.getAllLoanQualityCategoryMatrix();
+		appCache.setVar("LOAN_QUALITY_CATEGORY_MATRIX_CACHE", loanQualityCategoryMatrixCache);
+		Assert.assertEquals(3, ((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORY_MATRIX_CACHE")).size());
+	}
+
     @Test
-    public void a_account_number_with_no_delays() throws LoanNotFoundException {
-		latestLoan = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_NO_DELAY);
-		Assert.assertNotEquals(null, latestLoan);
-		Assert.assertEquals("9472", latestLoan.getBranch());
-		Assert.assertEquals("889684", latestLoan.getLoanAccountNumber());
-		Assert.assertEquals("200", latestLoan.getLoanAccountSuffix());
+    public void e_account_number_with_no_delays() throws LoanNotFoundException {
+		LATEST_LOAN = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_NO_DELAY);
+		Assert.assertNotEquals(null, LATEST_LOAN);
+		Assert.assertEquals("9472", LATEST_LOAN.getBranch());
+		Assert.assertEquals("889684", LATEST_LOAN.getLoanAccountNumber());
+		Assert.assertEquals("200", LATEST_LOAN.getLoanAccountSuffix());
     }
 
 	/**
 	 * When: convert to correct start loan date
 	 */
 	@Test
-	public void b_correct_loan_start_date_conversion(){
-		LocalDateTime startDate = latestLoan.getStartDate();
+	public void f_correct_loan_start_date_conversion(){
+		LocalDateTime startDate = LATEST_LOAN.getStartDate();
 		Assert.assertEquals(22, startDate.getDayOfMonth());
 		Assert.assertEquals(4, startDate.getMonthOfYear());
 		Assert.assertEquals(2014, startDate.getYear());
@@ -98,8 +200,8 @@ public class RisksCalculationApplicationGoodTests {
 	 * When: get no delays for specified account - the client receives loan quality GOOD
 	 */
 	@Test
-	public void c_get_no_delays_for_specified_account() throws LoanServCoeffNotFoundEx {
-		LoanServCoeffType loanQuality = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
+	public void g_get_no_delays_for_specified_account() throws LoanServCoeffNotFoundEx {
+		LoanServCoeffType loanQuality = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
 		Assert.assertEquals(LoanServCoeffType.GOOD, loanQuality);
 	}
 
@@ -107,16 +209,16 @@ public class RisksCalculationApplicationGoodTests {
 	 * When: only one delay for last 180 days - the client receives loan quality GOOD
 	 */
 	@Test
-	public void d_get_one_delays_for_specified_account_and_() throws LoanNotFoundException, DelayNotFoundException, LoanServCoeffNotFoundEx {
-		latestLoan = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_ONE_DELAY);
-		LoanServCoeffType loanQualityType = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
+	public void h_get_one_delays_for_specified_account_and_() throws LoanNotFoundException, DelayNotFoundException, LoanServCoeffNotFoundEx {
+		LATEST_LOAN = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_ONE_DELAY);
+		LoanServCoeffType loanQualityType = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
 		Assert.assertEquals(LoanServCoeffType.GOOD, loanQualityType);
 	}
 
 	@Test
-	public void f_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
-		LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(latestLoan, testEndOfDate);
-		BaseCustomer customer = customerService.getCustomer(latestLoan.getLoanAccountNumber());
+	public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
+		LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
+		BaseCustomer customer = customerService.getCustomer(LATEST_LOAN.getLoanAccountNumber());
 		qualityService.calculateLoanQualityCategory(customer.getFinStateType(), loanServCoeff);
 		Assert.assertEquals(LoanServCoeffType.GOOD, loanServCoeff);
 	}
