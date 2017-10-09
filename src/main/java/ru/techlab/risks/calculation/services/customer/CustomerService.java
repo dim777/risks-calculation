@@ -8,4 +8,5 @@ import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
  */
 public interface CustomerService {
     BaseCustomer getCustomer(String id) throws CustomerNotFoundEx;
+    Iterable<BaseCustomer> getAll();
 }

@@ -11,6 +11,7 @@ import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.mapping.Table;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
 import ru.xegex.risks.libs.model.account.Account;
+import ru.xegex.risks.libs.model.customer.Customer;
 import ru.xegex.risks.libs.model.loan.Loan;
 import ru.xegex.risks.libs.model.quality.LoanQualityCategory;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
@@ -60,12 +61,9 @@ public class BaseLoan implements Loan, Serializable{
     @Column("ddact")
     private String active;
 
-    private Optional<Account> account;
+    private Optional<BaseCustomer> baseCustomer;
 
     @Override
-    /**
-     * TODO: business logic shoud be excluded from model
-     * */
     public LocalDateTime getStartDate(){
         try {
             return DateTimeUtils.convertFromAs400Format(this.startDate);
@@ -75,8 +73,4 @@ public class BaseLoan implements Loan, Serializable{
         return new LocalDateTime(Long.MIN_VALUE);
     }
 
-    @Override
-    public Optional<Account> getAccount() {
-        return account;
-    }
 }

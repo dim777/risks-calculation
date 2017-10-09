@@ -6,6 +6,7 @@ import ru.techlab.risks.calculation.model.BaseCustomer;
 import ru.techlab.risks.calculation.repository.CustomerRepository;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -21,4 +22,9 @@ public class CustomerServiceImpl implements CustomerService {
         Optional<BaseCustomer> customer = customerRepository.findById(id);
         return customer.orElseThrow(() -> new CustomerNotFoundEx("No customer found"));
     }
+    @Override
+    public Iterable<BaseCustomer> getAll(){
+        return customerRepository.findAll();
+    }
+
 }

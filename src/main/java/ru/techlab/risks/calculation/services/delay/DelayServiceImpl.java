@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
 import ru.techlab.risks.calculation.repository.DelaysRepository;
+import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.model.loan.LoanServCoeff;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
@@ -27,7 +28,8 @@ public class DelayServiceImpl implements DelayService{
         Stream<BaseDelay> stream = delaysRepository.findSimpleDelayByLoan(loan.getBranch(), loan.getLoanAccountNumber(), loan.getLoanAccountSuffix());
         List<BaseDelay> delays = stream
                 .filter(baseDelay -> {
-                    if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), currentDate) > days) return false;
+                    if(baseDelay.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE))) return true;
+                    else if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), currentDate) > days) return false;
                     return true;
                 })
                 .collect(Collectors.toList());

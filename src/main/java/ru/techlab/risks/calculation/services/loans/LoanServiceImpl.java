@@ -8,8 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.repository.CustomerRepository;
 import ru.techlab.risks.calculation.repository.LoansRepository;
+import ru.techlab.risks.calculation.services.customer.CustomerService;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
+import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
@@ -27,11 +30,15 @@ public class LoanServiceImpl implements LoansService {
 
     @Autowired
     private LoansRepository loansRepository;
+    @Autowired
+    private CustomerService customerService;
 
     @Override
-    public BaseLoan getActiveAndNonPortfolioLoan(AccountId accountId) throws LoanNotFoundException {
-        Optional<BaseLoan> loan = loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(accountId.getBranch(), accountId.getLoanAccountNumber(), accountId.getLoanAccountSuffix());
-        return loan.orElseThrow(() -> new LoanNotFoundException("No loan found"));
+    public BaseLoan getActiveAndNonPortfolioLoan(AccountId accountId) throws LoanNotFoundException, CustomerNotFoundEx {
+        Optional<BaseLoan> loanOptional = loansRepository.findActiveAndNonPortfolioSimpleLoansByLoanId(accountId.getBranch(), accountId.getLoanAccountNumber(), accountId.getLoanAccountSuffix());
+        BaseLoan loan = loanOptional.orElseThrow(() -> new LoanNotFoundException("No loan found"));
+        loan.setBaseCustomer(Optional.ofNullable(customerService.getCustomer(accountId.getLoanAccountNumber())));
+        return loan;
     }
 
     @Override
@@ -42,6 +49,22 @@ public class LoanServiceImpl implements LoansService {
             return loansRepository.findActiveSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
         }
         return loansRepository.findSimpleLoansByStartDateBetween(dtFromAs400, dtTillAs400);
+    }
+
+    @Override
+    public List<BaseLoan> getAllActiveAndNonPortfolioBaseLoans() {
+        List<BaseLoan> loans = loansRepository.findAllActiveAndNonPortfolioBaseLoans();
+        loans.forEach(loan ->
+                {
+                    try {
+                        loan.setBaseCustomer(Optional.ofNullable(customerService.getCustomer(loan.getLoanAccountNumber())));
+                    } catch (CustomerNotFoundEx customerNotFoundEx) {
+                        customerNotFoundEx.printStackTrace();
+                    }
+                }
+        );
+
+        return loans;
     }
 
     /*@Override

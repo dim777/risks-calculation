@@ -1,6 +1,7 @@
 package ru.techlab.risks.calculation.model.rest;
 
 import lombok.Data;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.Serializable;
 
@@ -11,8 +12,10 @@ import java.io.Serializable;
 public class LoanServCoeff implements Serializable {
     private static final long serialVersionUID = 3375159358757648792L;
 
-    private String type;
+    private LoanServCoeffType type;
     private Integer id;
-    private Integer lastDays;
-    private Integer moreThanDays;
+    private Boolean isLegalEntitity;
+    private Integer forLastNDays;
+    private Integer moreOrEqThanDays;
+    private Integer lessThanDays;
 }

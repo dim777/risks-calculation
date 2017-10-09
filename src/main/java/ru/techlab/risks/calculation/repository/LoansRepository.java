@@ -26,7 +26,7 @@ public interface LoansRepository extends CassandraRepository<BaseLoan> {
     Stream<BaseLoan> findAllActiveSimpleLoans();
 
     @Query("SELECT * FROM SDDU WHERE DDACT = 'Y' AND DDASV2 = '000'")
-    Stream<BaseLoan> findAllActiveAndNonPortfolioSimpleLoans();
+    List<BaseLoan> findAllActiveAndNonPortfolioBaseLoans();
 
     @Query("SELECT * FROM SDDU WHERE DDACT = 'Y' AND DDASV2 = '000' AND DDABD = ?0 AND DDAND = ?1 AND DDASD = ?2")
     Optional<BaseLoan> findActiveAndNonPortfolioSimpleLoansByLoanId(String branch, String loanAccountNumber, String loanAccountSuffix);
