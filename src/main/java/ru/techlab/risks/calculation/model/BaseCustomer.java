@@ -34,7 +34,14 @@ public class BaseCustomer implements Customer, Serializable {
 
     @Override
     public FinStateType FIN_STATE_TYPE() throws QualityConvertionEx{
-        Integer fs = Integer.parseInt(this.financialState);
+        Integer fs;
+        try {
+            fs = Integer.parseInt(this.financialState);
+        }
+        catch (NumberFormatException ex){
+            return FinStateType.GOOD;
+        }
+
         if(fs.equals(0) || fs.equals(1)) return FinStateType.GOOD;
         else if(fs.equals(2)) return FinStateType.MIDDLE;
         else if(fs.equals(3) || fs.equals(4) || fs.equals(5)) return FinStateType.UNSATISFACTORY;

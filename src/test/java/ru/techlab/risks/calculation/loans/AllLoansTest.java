@@ -21,10 +21,12 @@ import ru.techlab.risks.calculation.loans.config.TestAppConfig;
 import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseCustomer;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.model.LoanQualityResult;
 import ru.techlab.risks.calculation.model.rest.BaseConfig;
 import ru.techlab.risks.calculation.model.rest.LoanQualityCategory;
 import ru.techlab.risks.calculation.model.rest.LoanQualityCategoryMatrix;
 import ru.techlab.risks.calculation.model.rest.LoanServCoeff;
+import ru.techlab.risks.calculation.repository.LoanQualityResultRepository;
 import ru.techlab.risks.calculation.services.config.ConfigService;
 import ru.techlab.risks.calculation.services.config.RiskConfigParamsService;
 import ru.techlab.risks.calculation.services.customer.CustomerService;
@@ -39,6 +41,7 @@ import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,6 +64,8 @@ public class AllLoansTest {
     private ConfigService configService;
     @Autowired
     private RiskConfigParamsService riskConfigParamsService;
+    @Autowired
+    private LoanQualityResultRepository loanQualityResultRepository;
 
     @Autowired
     private AppCache appCache;
@@ -183,11 +188,27 @@ public class AllLoansTest {
     @Test
     public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
         List<BaseLoan> loans = loansService.getAllActiveAndNonPortfolioBaseLoans();
+        List<LoanQualityCategory> loanQualityCategories = new ArrayList<>();
+
         loans.forEach(loan -> {
             try {
                 LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(loan, TEST_END_OF_DATE);
                 BaseCustomer customer = customerService.getCustomer(loan.getLoanAccountNumber());
                 LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeff);
+
+                LoanQualityResult loanQualityResult = new LoanQualityResult();
+                loanQualityResult.setBranch(loan.getBranch());
+                loanQualityResult.setLoanAccountNumber(loan.getLoanAccountNumber());
+                loanQualityResult.setLoanAccountSuffix(loan.getLoanAccountSuffix());
+                loanQualityResult.setCustomerName(customer.getName());
+                loanQualityResult.setStartDate(0);
+                loanQualityResult.setBalance(loan.getBalance());
+                loanQualityResult.setLoanQualityCategory(loanQualityCategory.getType());
+                loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getType());
+                loanQualityResult.setInterestRate(loanQualityCategory.getPMin());
+
+                loanQualityResultRepository.save(loanQualityResult);
+
             } catch (LoanServCoeffNotFoundEx loanServCoeffNotFoundEx) {
                 loanServCoeffNotFoundEx.printStackTrace();
             } catch (CustomerNotFoundEx customerNotFoundEx) {
