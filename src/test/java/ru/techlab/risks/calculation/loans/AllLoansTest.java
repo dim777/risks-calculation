@@ -3,6 +3,8 @@ package ru.techlab.risks.calculation.loans;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -34,15 +36,17 @@ import ru.techlab.risks.calculation.services.delay.DelayService;
 import ru.techlab.risks.calculation.services.loans.LoansService;
 import ru.techlab.risks.calculation.services.quality.QualityService;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
-import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
-import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Created by rb052775 on 09.10.2017.
@@ -86,6 +90,7 @@ public class AllLoansTest {
     private static int RUN_ONCE_COUNTER_AFTER;
 
     private static ObjectMapper mapper = new ObjectMapper();
+    DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     /**
      | branch | 5139 |
@@ -188,7 +193,8 @@ public class AllLoansTest {
     @Test
     public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
         List<BaseLoan> loans = loansService.getAllActiveAndNonPortfolioBaseLoans();
-        List<LoanQualityCategory> loanQualityCategories = new ArrayList<>();
+        List<LoanQualityResult> loanQualityResults = new ArrayList<>();
+        List<LoanQualityCategory> loanQualityCategories = ((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES"));
 
         loans.forEach(loan -> {
             try {
@@ -201,13 +207,14 @@ public class AllLoansTest {
                 loanQualityResult.setLoanAccountNumber(loan.getLoanAccountNumber());
                 loanQualityResult.setLoanAccountSuffix(loan.getLoanAccountSuffix());
                 loanQualityResult.setCustomerName(customer.getName());
-                loanQualityResult.setStartDate(0);
+                loanQualityResult.setStartDate(fmt.print(loan.getStartDate()));
                 loanQualityResult.setBalance(loan.getBalance());
-                loanQualityResult.setLoanQualityCategory(loanQualityCategory.getType());
-                loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getType());
+                loanQualityResult.setLoanQualityCategory(loanQualityCategory.getId());
+                loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getId());
                 loanQualityResult.setInterestRate(loanQualityCategory.getPMin());
+                loanQualityResult.setInterestRateAll(loanQualityCategory.getPMin());
 
-                loanQualityResultRepository.save(loanQualityResult);
+                loanQualityResults.add(loanQualityResult);
 
             } catch (LoanServCoeffNotFoundEx loanServCoeffNotFoundEx) {
                 loanServCoeffNotFoundEx.printStackTrace();
@@ -217,5 +224,38 @@ public class AllLoansTest {
                 qualityConvertionEx.printStackTrace();
             }
         });
+
+        Collection<LoanQualityResult> loanQualityResultsDistincts = loanQualityResults
+                .stream()
+                .collect(toMap(LoanQualityResult::getCustomerName, p -> p, (p, q) -> p)).values();
+
+        loanQualityResultsDistincts.forEach(
+                loanQualityResultDistinct -> {
+                    List<LoanQualityResult> allLoanQualityResult4Customer = loanQualityResults
+                            .stream()
+                            .filter(r -> r.getCustomerName().equals(loanQualityResultDistinct.getCustomerName()))
+                            .collect(Collectors.toList());
+
+                    Integer max = allLoanQualityResult4Customer
+                            .stream()
+                            .mapToInt(res -> res.getLoanQualityCategory())
+                            .max()
+                            .getAsInt();
+
+                    allLoanQualityResult4Customer.forEach( r -> {
+                        r.setLoanQualityCategoryForAllCustomerLoans(max);
+
+                        r.setInterestRateAll(
+                                loanQualityCategories
+                                        .stream()
+                                        .filter(cat -> cat.getId().equals(max))
+                                        .findFirst()
+                                        .get()
+                                        .getPMin()
+                        );
+                    });
+                    loanQualityResultRepository.save(allLoanQualityResult4Customer);
+                }
+        );
     }
 }

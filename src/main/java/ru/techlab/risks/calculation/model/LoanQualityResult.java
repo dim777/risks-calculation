@@ -5,11 +5,9 @@ import org.springframework.cassandra.core.PrimaryKeyType;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.mapping.Table;
-import ru.techlab.risks.calculation.model.rest.LoanQualityCategory;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Optional;
 
 /**
  * Created by dim777 on 05.10.17.
@@ -32,17 +30,20 @@ public class LoanQualityResult implements Serializable {
     private String customerName;
 
     @Column("dddt1")
-    private double startDate;
+    private String startDate;
 
     @Column("balance")
     private BigDecimal balance;
 
     @Column("kks0")
-    private String loanQualityCategory;
+    private Integer loanQualityCategory;
 
     @Column("kks1")
-    private String loanQualityCategoryForAllCustomerLoans;
+    private Integer loanQualityCategoryForAllCustomerLoans;
 
-    @Column("interest_rate")
+    @Column("interest_rate0")
     private Double interestRate;
+
+    @Column("interest_rate1")
+    private Double interestRateAll;
 }
