@@ -38,6 +38,7 @@ import ru.techlab.risks.calculation.services.quality.QualityService;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
+import ru.xegex.risks.libs.model.customer.FinStateType;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.IOException;
@@ -158,7 +159,7 @@ public class AllLoansTest {
 
     @Test
     public void c_get_risk_loan_quality_categories() throws IOException {
-        String responseBody = "[{\"id\":5,\"type\":\"HOPELESS\",\"pmin\":100.0},{\"id\":1,\"type\":\"STANDARD\",\"pmin\":0.0},{\"id\":2,\"type\":\"NONSTANDARD\",\"pmin\":1.0},{\"id\":4,\"type\":\"PROBLEM\",\"pmin\":51.0},{\"id\":3,\"type\":\"DOUBTFUL\",\"pmin\":21.0}]";
+        String responseBody = "[{\"id\":5,\"type\":\"HOPELESS\",\"pmin\":100.0},{\"id\":1,\"type\":\"STANDARD\",\"pmin\":100.0},{\"id\":2,\"type\":\"NONSTANDARD\",\"pmin\":1.0},{\"id\":4,\"type\":\"PROBLEM\",\"pmin\":51.0},{\"id\":3,\"type\":\"DOUBTFUL\",\"pmin\":21.0}]";
 
         List<LoanQualityCategory> mockLoanQualityCategory = mapper.readValue(responseBody,
                 TypeFactory.defaultInstance().constructCollectionType(List.class, LoanQualityCategory.class));
@@ -209,6 +210,8 @@ public class AllLoansTest {
                 loanQualityResult.setCustomerName(customer.getName());
                 loanQualityResult.setStartDate(fmt.print(loan.getStartDate()));
                 loanQualityResult.setBalance(loan.getBalance());
+                loanQualityResult.setLoanServCoeffType(loanServCoeff);
+                loanQualityResult.setFinState(customer.FIN_STATE_TYPE());
                 loanQualityResult.setLoanQualityCategory(loanQualityCategory.getId());
                 loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getId());
                 loanQualityResult.setInterestRate(loanQualityCategory.getPMin());

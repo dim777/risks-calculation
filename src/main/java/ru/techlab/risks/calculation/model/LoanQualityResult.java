@@ -5,6 +5,8 @@ import org.springframework.cassandra.core.PrimaryKeyType;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.mapping.Table;
+import ru.xegex.risks.libs.model.customer.FinStateType;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -34,6 +36,12 @@ public class LoanQualityResult implements Serializable {
 
     @Column("balance")
     private BigDecimal balance;
+
+    @Column("kod")
+    private LoanServCoeffType loanServCoeffType;
+
+    @Column("fs")
+    private FinStateType finState;
 
     @Column("kks0")
     private Integer loanQualityCategory;
