@@ -1,6 +1,5 @@
 package ru.techlab.risks.calculation.services.loans;
 
-import jnr.x86asm.OP;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.techlab.risks.calculation.model.AccountId;
 import ru.techlab.risks.calculation.model.BaseLoan;
-import ru.techlab.risks.calculation.repository.CustomerRepository;
 import ru.techlab.risks.calculation.repository.LoansRepository;
 import ru.techlab.risks.calculation.services.customer.CustomerService;
 import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
-import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
@@ -25,8 +22,8 @@ import java.util.stream.Stream;
  * Created by rb052775 on 22.08.2017.
  */
 @Service
-public class LoanServiceImpl implements LoansService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoanServiceImpl.class);
+public class LoansServiceImpl implements LoansService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoansServiceImpl.class);
 
     @Autowired
     private LoansRepository loansRepository;

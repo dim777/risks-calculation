@@ -15,7 +15,8 @@ import ru.techlab.risks.calculation.services.config.RiskConfigParamsService;
         "ru.techlab.risks.calculation.services.customer",
         "ru.techlab.risks.calculation.services.delay",
         "ru.techlab.risks.calculation.services.loans",
-        "ru.techlab.risks.calculation.services.quality"
+        "ru.techlab.risks.calculation.services.quality",
+        "ru.techlab.risks.calculation.services.calculation"
 })
 @Profile("test")
 public class TestAppConfig {

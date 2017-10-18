@@ -7,10 +7,12 @@ import ru.techlab.risks.calculation.component.AppCache;
 import ru.techlab.risks.calculation.model.BaseCustomer;
 import ru.techlab.risks.calculation.model.BaseDelay;
 import ru.techlab.risks.calculation.model.BaseLoan;
+import ru.techlab.risks.calculation.model.LoanQualityResult;
 import ru.techlab.risks.calculation.model.rest.LoanQualityCategory;
 import ru.techlab.risks.calculation.model.rest.LoanQualityCategoryMatrix;
 import ru.techlab.risks.calculation.model.rest.LoanServCoeff;
 import ru.techlab.risks.calculation.services.delay.DelayService;
+import ru.xegex.risks.libs.ex.convertion.ConvertionEx;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
@@ -19,7 +21,14 @@ import ru.xegex.risks.libs.model.customer.FinStateType;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Created by rb052775 on 27.09.2017.
@@ -31,6 +40,18 @@ public class QualityServiceImpl implements QualityService {
 
     @Autowired
     private AppCache appCache;
+
+    /**
+     * Distinct By Start And End Days
+     * @param delaysList
+     * @return
+     */
+    private static Collection<BaseDelay> distinctDelaysByStartAndEndDays(List<BaseDelay> delaysList){
+        return delaysList
+                .stream()
+                .collect(toMap(BaseDelay::getStartEndComplexValue, p -> p, (p, q) -> p))
+                .values();
+    }
 
     private LoanServCoeffType calcCoeffType(BaseLoan loan, LocalDateTime endOfDay, List<LoanServCoeff> loanServCoeffs, Boolean isUr) throws LoanServCoeffNotFoundEx {
 
@@ -59,77 +80,19 @@ public class QualityServiceImpl implements QualityService {
             return LoanServCoeffType.GOOD;
         }
 
-        long countInfBad = delaysList
+        Collection<BaseDelay> delaysCollection = distinctDelaysByStartAndEndDays(delaysList);
+        int totalDelayDays = delaysCollection
                 .stream()
-                .filter(baseDelay -> baseDelay.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE)))
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), endOfDay);
-                    if( diffDays >= loanServCoeffBad.getMoreOrEqThanDays() && diffDays < loanServCoeffBad.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
+                .mapToInt(d -> {
+                    if(d.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE))) {
+                        return DateTimeUtils.differenceInDays(d.getStartDelayDate(), endOfDay);
+                    }
+                    return DateTimeUtils.differenceInDays(d.getStartDelayDate(), d.getFinishDelayDate());
+                }).sum();
 
-        if(countInfBad > 0) return LoanServCoeffType.BAD;
-
-        long countInfMid = delaysList
-                .stream()
-                .filter(baseDelay -> baseDelay.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE)))
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), endOfDay);
-                    if( diffDays >= loanServCoeffMid.getMoreOrEqThanDays() && diffDays < loanServCoeffMid.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
-
-        if(countInfMid > 0) return LoanServCoeffType.MID;
-
-        long countInfGood = delaysList
-                .stream()
-                .filter(baseDelay -> baseDelay.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE)))
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), endOfDay);
-                    if( diffDays >= loanServCoeffGood.getMoreOrEqThanDays() && diffDays < loanServCoeffGood.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
-
-        if(countInfGood > 0) return LoanServCoeffType.GOOD;
-
-        /**
-         * Rest
-         */
-        long countBad = delaysList
-                .stream()
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), baseDelay.getFinishDelayDate());
-                    if( diffDays >= loanServCoeffBad.getMoreOrEqThanDays() && diffDays < loanServCoeffBad.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
-
-        if(countBad > 0) return LoanServCoeffType.BAD;
-
-        long countMid = delaysList
-                .stream()
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), baseDelay.getFinishDelayDate());
-                    if( diffDays >= loanServCoeffMid.getMoreOrEqThanDays() && diffDays < loanServCoeffMid.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
-
-        if(countMid > 0) return LoanServCoeffType.MID;
-
-        long countGood = delaysList
-                .stream()
-                .filter(baseDelay -> {
-                    int diffDays = DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), baseDelay.getFinishDelayDate());
-                    if( diffDays >= loanServCoeffGood.getMoreOrEqThanDays() && diffDays < loanServCoeffGood.getLessThanDays()) return true;
-                    return false;
-                })
-                .count();
-
-        if(countGood > 0) return LoanServCoeffType.GOOD;
+        if( totalDelayDays >= loanServCoeffBad.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffBad.getLessThanDays()) return LoanServCoeffType.BAD;
+        else if( totalDelayDays >= loanServCoeffMid.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffMid.getLessThanDays()) return LoanServCoeffType.MID;
+        else if( totalDelayDays >= loanServCoeffGood.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffGood.getLessThanDays() )return LoanServCoeffType.GOOD;
 
         return LoanServCoeffType.GOOD;
     }

@@ -29,7 +29,7 @@ public class DelayServiceImpl implements DelayService{
         List<BaseDelay> delays = stream
                 .filter(baseDelay -> {
                     if(baseDelay.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE))) return true;
-                    else if(DateTimeUtils.differenceInDays(baseDelay.getStartDelayDate(), currentDate) > days) return false;
+                    else if(DateTimeUtils.differenceInDays(baseDelay.getFinishDelayDate(), currentDate) > days) return false;
                     return true;
                 })
                 .collect(Collectors.toList());

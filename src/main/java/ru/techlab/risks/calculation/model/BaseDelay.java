@@ -77,6 +77,14 @@ public class BaseDelay implements Delay, Serializable {
         return new LocalDateTime(Long.MIN_VALUE);
     }
 
+    public String getStartEndComplexValue() {
+        StringBuilder sb = new StringBuilder();
+        sb
+                .append(startDate)
+                .append(endDate);
+        return sb.toString();
+    }
+
     @Override
     public DelayType getDelayType(){
         return delayType;

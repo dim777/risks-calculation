@@ -29,6 +29,7 @@ import ru.techlab.risks.calculation.model.rest.LoanQualityCategory;
 import ru.techlab.risks.calculation.model.rest.LoanQualityCategoryMatrix;
 import ru.techlab.risks.calculation.model.rest.LoanServCoeff;
 import ru.techlab.risks.calculation.repository.LoanQualityResultRepository;
+import ru.techlab.risks.calculation.services.calculation.CalculationService;
 import ru.techlab.risks.calculation.services.config.ConfigService;
 import ru.techlab.risks.calculation.services.config.RiskConfigParamsService;
 import ru.techlab.risks.calculation.services.customer.CustomerService;
@@ -71,6 +72,8 @@ public class AllLoansTest {
     private RiskConfigParamsService riskConfigParamsService;
     @Autowired
     private LoanQualityResultRepository loanQualityResultRepository;
+    @Autowired
+    private CalculationService calculationService;
 
     @Autowired
     private AppCache appCache;
@@ -91,7 +94,6 @@ public class AllLoansTest {
     private static int RUN_ONCE_COUNTER_AFTER;
 
     private static ObjectMapper mapper = new ObjectMapper();
-    DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     /**
      | branch | 5139 |
@@ -159,7 +161,7 @@ public class AllLoansTest {
 
     @Test
     public void c_get_risk_loan_quality_categories() throws IOException {
-        String responseBody = "[{\"id\":5,\"type\":\"HOPELESS\",\"pmin\":100.0},{\"id\":1,\"type\":\"STANDARD\",\"pmin\":100.0},{\"id\":2,\"type\":\"NONSTANDARD\",\"pmin\":1.0},{\"id\":4,\"type\":\"PROBLEM\",\"pmin\":51.0},{\"id\":3,\"type\":\"DOUBTFUL\",\"pmin\":21.0}]";
+        String responseBody = "[{\"id\":5,\"type\":\"HOPELESS\",\"pmin\":100.0},{\"id\":1,\"type\":\"STANDARD\",\"pmin\":0.0},{\"id\":2,\"type\":\"NONSTANDARD\",\"pmin\":1.0},{\"id\":4,\"type\":\"PROBLEM\",\"pmin\":51.0},{\"id\":3,\"type\":\"DOUBTFUL\",\"pmin\":21.0}]";
 
         List<LoanQualityCategory> mockLoanQualityCategory = mapper.readValue(responseBody,
                 TypeFactory.defaultInstance().constructCollectionType(List.class, LoanQualityCategory.class));
@@ -193,72 +195,7 @@ public class AllLoansTest {
 
     @Test
     public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
-        List<BaseLoan> loans = loansService.getAllActiveAndNonPortfolioBaseLoans();
-        List<LoanQualityResult> loanQualityResults = new ArrayList<>();
-        List<LoanQualityCategory> loanQualityCategories = ((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES"));
-
-        loans.forEach(loan -> {
-            try {
-                LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(loan, TEST_END_OF_DATE);
-                BaseCustomer customer = customerService.getCustomer(loan.getLoanAccountNumber());
-                LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeff);
-
-                LoanQualityResult loanQualityResult = new LoanQualityResult();
-                loanQualityResult.setBranch(loan.getBranch());
-                loanQualityResult.setLoanAccountNumber(loan.getLoanAccountNumber());
-                loanQualityResult.setLoanAccountSuffix(loan.getLoanAccountSuffix());
-                loanQualityResult.setCustomerName(customer.getName());
-                loanQualityResult.setStartDate(fmt.print(loan.getStartDate()));
-                loanQualityResult.setBalance(loan.getBalance());
-                loanQualityResult.setLoanServCoeffType(loanServCoeff);
-                loanQualityResult.setFinState(customer.FIN_STATE_TYPE());
-                loanQualityResult.setLoanQualityCategory(loanQualityCategory.getId());
-                loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getId());
-                loanQualityResult.setInterestRate(loanQualityCategory.getPMin());
-                loanQualityResult.setInterestRateAll(loanQualityCategory.getPMin());
-
-                loanQualityResults.add(loanQualityResult);
-
-            } catch (LoanServCoeffNotFoundEx loanServCoeffNotFoundEx) {
-                loanServCoeffNotFoundEx.printStackTrace();
-            } catch (CustomerNotFoundEx customerNotFoundEx) {
-                customerNotFoundEx.printStackTrace();
-            } catch (QualityConvertionEx qualityConvertionEx) {
-                qualityConvertionEx.printStackTrace();
-            }
-        });
-
-        Collection<LoanQualityResult> loanQualityResultsDistincts = loanQualityResults
-                .stream()
-                .collect(toMap(LoanQualityResult::getCustomerName, p -> p, (p, q) -> p)).values();
-
-        loanQualityResultsDistincts.forEach(
-                loanQualityResultDistinct -> {
-                    List<LoanQualityResult> allLoanQualityResult4Customer = loanQualityResults
-                            .stream()
-                            .filter(r -> r.getCustomerName().equals(loanQualityResultDistinct.getCustomerName()))
-                            .collect(Collectors.toList());
-
-                    Integer max = allLoanQualityResult4Customer
-                            .stream()
-                            .mapToInt(res -> res.getLoanQualityCategory())
-                            .max()
-                            .getAsInt();
-
-                    allLoanQualityResult4Customer.forEach( r -> {
-                        r.setLoanQualityCategoryForAllCustomerLoans(max);
-
-                        r.setInterestRateAll(
-                                loanQualityCategories
-                                        .stream()
-                                        .filter(cat -> cat.getId().equals(max))
-                                        .findFirst()
-                                        .get()
-                                        .getPMin()
-                        );
-                    });
-                    loanQualityResultRepository.save(allLoanQualityResult4Customer);
-                }
-        );
+        List<LoanQualityResult> results = calculationService
+                .calculateLQR((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES"), TEST_END_OF_DATE);
     }
 }
