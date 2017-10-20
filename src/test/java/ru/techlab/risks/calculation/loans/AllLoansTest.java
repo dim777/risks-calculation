@@ -104,7 +104,7 @@ public class AllLoansTest {
     //private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9499", "V79963", "200");
     private static final AccountId ACCOUNT_ID_WITH_NO_DELAY = new AccountId("9472", "889684", "200");
     private static final AccountId ACCOUNT_ID_WITH_ONE_DELAY = new AccountId("9472", "889684", "200");
-    private static final LocalDateTime TEST_END_OF_DATE = new LocalDateTime("2017-09-21");
+    private static final LocalDateTime TEST_END_OF_DATE = new LocalDateTime("2017-10-16");
 
     private static BaseLoan LATEST_LOAN = null;
 
@@ -195,7 +195,9 @@ public class AllLoansTest {
 
     @Test
     public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
+        List<BaseLoan> loans = loansService.getAllActiveAndNonPortfolioBaseLoans();
+
         List<LoanQualityResult> results = calculationService
-                .calculateLQR((List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES"), TEST_END_OF_DATE);
+                .calculateLQR(loans, (List<LoanQualityCategory>)appCache.getVar("LOAN_QUALITY_CATEGORIES"), TEST_END_OF_DATE);
     }
 }

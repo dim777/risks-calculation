@@ -36,6 +36,7 @@ import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffResult;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.io.IOException;
@@ -201,15 +202,15 @@ public class RisksCalculationApplicationBadTests {
 	@Test
 	public void h_get_delays_for_specified_loan_account() throws LoanNotFoundException, DelayNotFoundException, LoanServCoeffNotFoundEx, CustomerNotFoundEx {
 		LATEST_LOAN = loansService.getActiveAndNonPortfolioLoan(ACCOUNT_ID_WITH_ONE_DELAY);
-		LoanServCoeffType loanServCoeffType = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
-		Assert.assertEquals(LoanServCoeffType.BAD, loanServCoeffType);
+		LoanServCoeffResult loanServCoeffResult = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
+		Assert.assertEquals(LoanServCoeffType.BAD, loanServCoeffResult.getLoanServCoeffType());
 	}
 
 	@Test
 	public void i_calculate_loan_quality_category() throws CustomerNotFoundEx, QualityConvertionEx, LoanServCoeffNotFoundEx {
-		LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
+		LoanServCoeffResult loanServCoeffResult = qualityService.calculateLoanServCoeff(LATEST_LOAN, TEST_END_OF_DATE);
 		BaseCustomer customer = customerService.getCustomer(LATEST_LOAN.getLoanAccountNumber());
-		LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeff);
+		LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeffResult.getLoanServCoeffType());
 		Assert.assertEquals("HOPELESS", loanQualityCategory.getType());
 	}
 }

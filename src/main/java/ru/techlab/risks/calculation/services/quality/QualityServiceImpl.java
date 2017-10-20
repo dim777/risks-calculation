@@ -18,6 +18,7 @@ import ru.xegex.risks.libs.ex.delays.DelayNotFoundException;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
 import ru.xegex.risks.libs.model.customer.FinStateType;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffResult;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 import ru.xegex.risks.libs.utils.DateTimeUtils;
 
@@ -53,7 +54,7 @@ public class QualityServiceImpl implements QualityService {
                 .values();
     }
 
-    private LoanServCoeffType calcCoeffType(BaseLoan loan, LocalDateTime endOfDay, List<LoanServCoeff> loanServCoeffs, Boolean isUr) throws LoanServCoeffNotFoundEx {
+    private LoanServCoeffResult calcCoeffType(BaseLoan loan, LocalDateTime endOfDay, List<LoanServCoeff> loanServCoeffs, Boolean isUr) throws LoanServCoeffNotFoundEx {
 
         LoanServCoeff loanServCoeffBad = loanServCoeffs
                 .stream()
@@ -75,26 +76,36 @@ public class QualityServiceImpl implements QualityService {
 
         List<BaseDelay> delaysList;
         try {
+            //TODO: should been refactor because getForLastNDays should be done not only for loanServCoeffBad
             delaysList = delayService.getDelaysByLoanForLastNDays(loan, endOfDay, loanServCoeffBad.getForLastNDays());
         } catch (DelayNotFoundException e) {
-            return LoanServCoeffType.GOOD;
+            return new LoanServCoeffResult(LoanServCoeffType.GOOD, 0, 0);
         }
 
+
+
         Collection<BaseDelay> delaysCollection = distinctDelaysByStartAndEndDays(delaysList);
-        int totalDelayDays = delaysCollection
+        int calcDelayDays = delaysCollection
                 .stream()
                 .mapToInt(d -> {
+                    LocalDateTime startDt = d.getStartDelayDate().minusDays(loanServCoeffBad.getForLastNDays());
                     if(d.getFinishDelayDate().equals(new LocalDateTime(Integer.MAX_VALUE))) {
-                        return DateTimeUtils.differenceInDays(d.getStartDelayDate(), endOfDay);
+                        return DateTimeUtils.differenceInDays(startDt, endOfDay);
                     }
-                    return DateTimeUtils.differenceInDays(d.getStartDelayDate(), d.getFinishDelayDate());
+                    return DateTimeUtils.differenceInDays(startDt, d.getFinishDelayDate());
                 }).sum();
 
-        if( totalDelayDays >= loanServCoeffBad.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffBad.getLessThanDays()) return LoanServCoeffType.BAD;
-        else if( totalDelayDays >= loanServCoeffMid.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffMid.getLessThanDays()) return LoanServCoeffType.MID;
-        else if( totalDelayDays >= loanServCoeffGood.getMoreOrEqThanDays() && totalDelayDays < loanServCoeffGood.getLessThanDays() )return LoanServCoeffType.GOOD;
+        int totalDelayDays = delaysCollection
+                .stream()
+                .filter(d -> d.equals(new LocalDateTime(Integer.MAX_VALUE)))
+                .mapToInt(d -> DateTimeUtils.differenceInDays(d.getStartDelayDate(), endOfDay))
+                .sum();
 
-        return LoanServCoeffType.GOOD;
+        if( calcDelayDays >= loanServCoeffBad.getMoreOrEqThanDays() && calcDelayDays < loanServCoeffBad.getLessThanDays()) return new LoanServCoeffResult(LoanServCoeffType.BAD, calcDelayDays, totalDelayDays);
+        else if( calcDelayDays >= loanServCoeffMid.getMoreOrEqThanDays() && calcDelayDays < loanServCoeffMid.getLessThanDays()) return new LoanServCoeffResult(LoanServCoeffType.MID, calcDelayDays, totalDelayDays);
+        else if( calcDelayDays >= loanServCoeffGood.getMoreOrEqThanDays() && calcDelayDays < loanServCoeffGood.getLessThanDays() )return new LoanServCoeffResult(LoanServCoeffType.GOOD, calcDelayDays, totalDelayDays);
+
+        return new LoanServCoeffResult(LoanServCoeffType.GOOD, calcDelayDays, totalDelayDays);
     }
 
 
@@ -105,7 +116,7 @@ public class QualityServiceImpl implements QualityService {
      * @return
      */
     @Override
-    public LoanServCoeffType calculateLoanServCoeff(BaseLoan loan, LocalDateTime endOfDay) throws LoanServCoeffNotFoundEx, CustomerNotFoundEx {
+    public LoanServCoeffResult calculateLoanServCoeff(BaseLoan loan, LocalDateTime endOfDay) throws LoanServCoeffNotFoundEx, CustomerNotFoundEx {
         BaseCustomer customer = loan.getBaseCustomer().orElseThrow(() -> new CustomerNotFoundEx("Customer not found ex"));
         switch (customer.LEGAL_ENTITITY_TYPE()){
             case UR: return calcCoeffType(loan, endOfDay, (List<LoanServCoeff>)appCache.getVar("LOAN_SERV_COEFFS"), true);

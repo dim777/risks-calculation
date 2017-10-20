@@ -16,6 +16,7 @@ import ru.techlab.risks.calculation.services.quality.QualityService;
 import ru.xegex.risks.libs.ex.customer.CustomerNotFoundEx;
 import ru.xegex.risks.libs.ex.loans.LoanServCoeffNotFoundEx;
 import ru.xegex.risks.libs.ex.quality.QualityConvertionEx;
+import ru.xegex.risks.libs.model.loan.LoanServCoeffResult;
 import ru.xegex.risks.libs.model.loan.LoanServCoeffType;
 
 import java.util.ArrayList;
@@ -31,8 +32,6 @@ import static java.util.stream.Collectors.toMap;
 @Service
 public class CalculationServiceImpl implements CalculationService {
     @Autowired
-    private LoansService loansService;
-    @Autowired
     private QualityService qualityService;
     @Autowired
     private CustomerService customerService;
@@ -43,15 +42,14 @@ public class CalculationServiceImpl implements CalculationService {
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     @Override
-    public List<LoanQualityResult> calculateLQR(List<LoanQualityCategory> loanQualityCategories, final LocalDateTime END_OF_DATE) {
+    public List<LoanQualityResult> calculateLQR(List<BaseLoan> loans, List<LoanQualityCategory> loanQualityCategories, final LocalDateTime END_OF_DATE) {
         List<LoanQualityResult> loanQualityResults = new ArrayList<>();
 
-        List<BaseLoan> loans = loansService.getAllActiveAndNonPortfolioBaseLoans();
         loans.forEach(loan -> {
             try {
-                LoanServCoeffType loanServCoeff = qualityService.calculateLoanServCoeff(loan, END_OF_DATE);
+                LoanServCoeffResult loanServCoeffResult = qualityService.calculateLoanServCoeff(loan, END_OF_DATE);
                 BaseCustomer customer = customerService.getCustomer(loan.getLoanAccountNumber());
-                LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeff);
+                LoanQualityCategory loanQualityCategory = qualityService.calculateLoanQualityCategory(customer.FIN_STATE_TYPE(), loanServCoeffResult.getLoanServCoeffType());
 
                 LoanQualityResult loanQualityResult = new LoanQualityResult();
                 loanQualityResult.setBranch(loan.getBranch());
@@ -60,7 +58,9 @@ public class CalculationServiceImpl implements CalculationService {
                 loanQualityResult.setCustomerName(customer.getName());
                 loanQualityResult.setStartDate(formatter.print(loan.getStartDate()));
                 loanQualityResult.setBalance(loan.getBalance());
-                loanQualityResult.setLoanServCoeffType(loanServCoeff);
+                loanQualityResult.setLoanServCoeffType(loanServCoeffResult.getLoanServCoeffType());
+                loanQualityResult.setCalcDelayDays(loanServCoeffResult.getCalcDelayDays());
+                loanQualityResult.setTotalDelayDays(loanServCoeffResult.getTotalDelayDays());
                 loanQualityResult.setFinState(customer.FIN_STATE_TYPE());
                 loanQualityResult.setLoanQualityCategory(loanQualityCategory.getId());
                 loanQualityResult.setLoanQualityCategoryForAllCustomerLoans(loanQualityCategory.getId());
