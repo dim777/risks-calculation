@@ -20,11 +20,11 @@ import java.math.BigDecimal;
 public class LoanQualityResult implements Serializable {
     private static final long serialVersionUID = 3375159358757648792L;
 
-    @PrimaryKeyColumn(name = "branch_id", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
-    private String branch;
-
-    @PrimaryKeyColumn(name = "customer_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "customer_id", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
     private String loanAccountNumber;
+
+    @PrimaryKeyColumn(name = "branch_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    private String branch;
 
     @PrimaryKeyColumn(name = "suffix", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
     private String loanAccountSuffix;
